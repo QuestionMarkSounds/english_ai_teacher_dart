@@ -6,8 +6,41 @@ import 'package:langchain/langchain.dart';
 JsonEncoder encoder =
     JsonEncoder.withIndent('  '); // '  ' for 2-space indentation
 
-final class JsonMemoryManager extends BaseChatMemory {
-  int? maxMessages = 20;
+class BaseMemoryManagerTemplate {
+  String? roomId;
+  String? memoryFilePath;
+  final String userId;
+
+  BaseMemoryManagerTemplate(
+      {required this.userId, this.memoryFilePath, this.roomId});
+}
+
+final class BaseUserInfoChatMemory extends BaseChatMemory {
+  String? roomId;
+  final String? memoryFilePath;
+  final String userId;
+  BaseUserInfoChatMemory(this.userId,
+      {this.memoryFilePath,
+      super.inputKey,
+      super.outputKey,
+      super.returnMessages = true,
+      required super.chatHistory});
+
+  @override
+  Future<MemoryVariables> loadMemoryVariables(
+      [MemoryInputValues values = const {}]) {
+    // TODO: implement loadMemoryVariables
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement memoryKeys
+  Set<String> get memoryKeys => throw UnimplementedError();
+
+  Future<void> save() async {}
+}
+
+final class JsonMemoryManager extends BaseUserInfoChatMemory {
   String? roomId;
   final String memoryFilePath;
   final String userId;
@@ -26,7 +59,6 @@ final class JsonMemoryManager extends BaseChatMemory {
       memoryFilePath: memoryFilePath,
       userId: userId,
       roomId: roomId,
-      maxMessages: maxMessages,
       memoryFile: memoryFile,
       chatHistory: chatHistory,
     );
@@ -41,14 +73,13 @@ final class JsonMemoryManager extends BaseChatMemory {
     required this.memoryFilePath,
     required this.userId,
     this.roomId,
-    this.maxMessages,
     required this.memoryFile,
     this.memoryKey = BaseMemory.defaultMemoryKey,
     this.systemPrefix = SystemChatMessage.defaultPrefix,
     this.humanPrefix = HumanChatMessage.defaultPrefix,
     this.aiPrefix = AIChatMessage.defaultPrefix,
     this.toolPrefix = ToolChatMessage.defaultPrefix,
-  }) : super(chatHistory: chatHistory ?? ChatMessageHistory());
+  }) : super(userId, chatHistory: chatHistory ?? ChatMessageHistory());
 
   /// The memory key to use for the chat history.
   /// This will be passed as input variable to the prompt.
@@ -74,9 +105,7 @@ final class JsonMemoryManager extends BaseChatMemory {
     if (memory.containsKey(userId)) {
       List<dynamic> userMessages = memory[userId];
       for (var message in userMessages) {
-        print("${message} ${message.runtimeType}");
         if (message is Map<String, dynamic>) {
-          print("YES");
           switch (message.keys.first) {
             case 'user':
               chatHistory.addHumanChatMessage(message.values.first);
@@ -105,13 +134,12 @@ final class JsonMemoryManager extends BaseChatMemory {
     await save();
   }
 
+  @override
   Future<void> save() async {
     Map<String, dynamic> memory = jsonDecode(await memoryFile.readAsString());
     List<Map<String, dynamic>> messages = [];
     List<ChatMessage> chatMessages = await chatHistory.getChatMessages();
-    print("[Save] ${chatMessages.length} messages");
     for (ChatMessage chatMessage in chatMessages) {
-      print(chatMessage.runtimeType);
       switch (chatMessage.runtimeType) {
         case HumanChatMessage:
           messages.add(
@@ -124,7 +152,6 @@ final class JsonMemoryManager extends BaseChatMemory {
           break;
       }
     }
-    print("[Save] $messages");
     memory[userId] = messages;
     await memoryFile.writeAsString(encoder.convert(memory));
   }
@@ -156,6 +183,5 @@ void main() async {
       memoryFilePath: 'memory.json',
       userId: 'user2',
       systemPrompt: "Reply to everything in the rudest possible way");
-  // print();
   await memoryManager.addMessage({"user": "assalamualaikum 2.0"});
 }
