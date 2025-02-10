@@ -1,7 +1,7 @@
 import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
-import 'json_memory_manager.dart';
-import 'tools/onboarding_agent/tools.dart';
+import '../json_memory_manager.dart';
+import 'tools/tools.dart';
 
 class OnboardingAgent {
   final BaseChatModel llm;
