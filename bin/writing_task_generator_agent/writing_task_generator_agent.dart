@@ -21,6 +21,7 @@ Future<dynamic> runWritingTaskGeneratorAgent({
   required String taskObjective,
   required String taskVariations,
   required String englishLevel,
+  Map<String, dynamic>? taskOutputJsonSchema,
   String? topic,
 }) async {
   String writingTaskGeneratorAgentSystemPrompt = """
@@ -50,22 +51,23 @@ Future<dynamic> runWritingTaskGeneratorAgent({
     tool: ToolSpec(
       name: "Answer",
       description: "Follow this reply structure",
-      inputJsonSchema: {
-        "properties": {
-          "exercise": {
-            "default": "Generated exercise",
-            "title": "",
-            "type": "string"
+      inputJsonSchema: taskOutputJsonSchema ??
+          {
+            "properties": {
+              "exercise": {
+                "default": "Generated exercise",
+                "title": "",
+                "type": "string"
+              },
+              "ideal_answer": {
+                "default": "Generated ideal answer",
+                "title": "Ideal Answer",
+                "type": "string"
+              }
+            },
+            "title": "Answer",
+            "type": "object"
           },
-          "ideal_answer": {
-            "default": "Generated ideal answer",
-            "title": "Ideal Answer",
-            "type": "string"
-          }
-        },
-        "title": "Answer",
-        "type": "object"
-      },
     ),
     outputParser: ToolsOutputParser(),
   );

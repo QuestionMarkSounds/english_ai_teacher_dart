@@ -46,7 +46,8 @@ void main() async {
     taskObjective: selectedEntry['objective'] ?? '',
     taskVariations: selectedEntry['variations'] ?? '',
     englishLevel: englishLevel,
+    taskOutputJsonSchema: selectedEntry['jsonSchema'],
     topic: topic,
   );
-  print("AI output: \n ${result["output"][0].arguments["exercise"]}");
+  print("AI output: \n ${result["output"][0].arguments}");
 }
