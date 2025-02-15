@@ -29,7 +29,13 @@ File learningPlanFile = File('learning_plan.json');
 
 void main() async {
   OnboardingAgent onboardingAgent = await createOnboardingAgent(
-      userId: "andruha3", filePath: memoryFile.path, chatModel: chatModel);
+      userId: "andruhar", filePath: memoryFile.path, chatModel: chatModel);
+
+  String response = await onboardingAgent.invoke(
+      "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.");
+
+  print('AI: ${response}');
+
   while (true) {
     stdout.write('You: ');
     String? userInput = stdin.readLineSync();
