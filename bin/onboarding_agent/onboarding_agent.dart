@@ -1,60 +1,19 @@
+import 'dart:math';
+
 import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
 import '../json_memory_manager.dart';
+import '../agent_executor_with_next_step_callback.dart';
 import 'tools/tools.dart';
 
 class OnboardingAgent {
   final BaseChatModel llm;
-  final BaseChain executor;
-  final BaseUserInfoChatMemory memoryManager;
-
-  final promptTemplate = ChatPromptTemplate.fromTemplates([
-    (ChatMessageType.human, '{question}'),
-  ]);
-
-  OnboardingAgent({required this.llm, required this.memoryManager})
-      : executor = init(memoryManager, llm);
-
-  static BaseChain init(
-      BaseUserInfoChatMemory memoryManager, BaseChatModel llm) {
-    final agent = ToolsAgent.fromLLMAndTools(
-        llm: llm,
-        tools: [
-          UpdateUserData(memoryManager.userId),
-          GeneratePlan(memoryManager.userId)
-        ],
-        memory: memoryManager);
-    return AgentExecutor(agent: agent);
-  }
-
-  Future<String> invoke(String input) async {
-    final formattedPrompt = promptTemplate.format({'question': input});
-    String response = "";
-    await retry(
-      () async {
-        response = await executor.run(formattedPrompt);
-      },
-      retryIf: (e) => true,
-      delayFactor: const Duration(milliseconds: 300),
-      maxAttempts: 3,
-    );
-    await memoryManager.save();
-    return response;
-  }
-}
-
-String userInfo(String name, String nativeLanguage, String interests) {
-  return "Name: $name\nNative Language: $nativeLanguage\nInterests: $interests\n";
-}
-
-Future<OnboardingAgent> createOnboardingAgent(
-    {required String userId,
-    required String filePath,
-    required BaseChatModel chatModel}) async {
-  String userInformation =
-      userInfo("Mukhtar", "Armenian", "Watching TV, Politics");
-
-  String onboardingAgentSystemPrompt = """
+  late BaseChain executor;
+  late ChatPromptTemplate promptTemplate;
+  final void Function(Map<String, dynamic> output) updateUserCallback;
+  final void Function(Map<String, dynamic> output) generatePlanCallback;
+  final void Function(String tool) toolUsageCallback;
+  final String onboardingAgentSystemPrompt = """
   You are an onboarding assistant for an English-learning app.  
   The user’s name, native language, and interests are provided.  
   Your primary goal is to understand **why** the user wants to learn English.  
@@ -86,12 +45,101 @@ Future<OnboardingAgent> createOnboardingAgent(
   - **Ensure clarity**: Messages should be easy to understand.  
     - Example: "Please send the file by Monday."  
 
-  **User Information:** '$userInformation'  
+  **User Information:** '{userInformation}'  
   """;
 
-  final memoryManager = await JsonMemoryManager.create(
-      memoryFilePath: filePath,
-      userId: userId,
-      systemPrompt: onboardingAgentSystemPrompt);
-  return OnboardingAgent(llm: chatModel, memoryManager: memoryManager);
+  OnboardingAgent(
+      {required this.llm,
+      required this.updateUserCallback,
+      required this.generatePlanCallback,
+      required this.toolUsageCallback}) {
+    promptTemplate = ChatPromptTemplate.fromTemplates([
+      (ChatMessageType.system, onboardingAgentSystemPrompt),
+      (ChatMessageType.messagesPlaceholder, 'message_history'),
+      (ChatMessageType.human, '{question}'),
+    ]);
+    final agent = ToolsAgent.fromLLMAndTools(
+        llm: llm,
+        tools: [
+          UpdateUserData(updateUserCallback),
+          GeneratePlan(generatePlanCallback)
+        ],
+        systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
+            onboardingAgentSystemPrompt),
+        extraPromptMessages: [
+          ChatMessagePromptTemplate.messagesPlaceholder('message_history'),
+        ]);
+
+    executor = AgentExecutorWithNextStepCallback(
+      agent: agent,
+      toolUsageCallback: toolUsageCallback,
+    );
+  }
+
+  Future<String> greet(
+      List<Map<String, dynamic>> messageHistory, String userInformation) async {
+    final promptJson = promptTemplate.format({
+      'question':
+          "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.",
+      'message_history': processMessageHistory(messageHistory),
+      'userInformation': userInformation
+    });
+    String response = "";
+    await retry(
+      () async {
+        response = await executor.run(promptJson);
+      },
+      retryIf: (e) => true,
+      delayFactor: const Duration(milliseconds: 300),
+      maxAttempts: 3,
+    );
+    return response;
+  }
+
+  Future<String> stream(String input, List<Map<String, dynamic>> messageHistory,
+      String userInformation) async {
+    Map<String, dynamic> formattedPrompt = {
+      'input': input,
+      'message_history': processMessageHistory(messageHistory),
+      'userInformation': userInformation
+    };
+    String response = "";
+
+    await retry(
+      () async {
+        await retry(
+          () async {
+            response = (await executor.call(formattedPrompt))["output"];
+          },
+          retryIf: (e) => true,
+          delayFactor: const Duration(milliseconds: 300),
+          maxAttempts: 3,
+        );
+      },
+      retryIf: (e) => true,
+      delayFactor: const Duration(milliseconds: 300),
+      maxAttempts: 3,
+    );
+    return response;
+  }
+}
+
+List<ChatMessage> processMessageHistory(
+    List<Map<String, dynamic>> messageHistory) {
+  List<ChatMessage> messages = [];
+  for (Map<String, dynamic> message in messageHistory) {
+    switch (message.keys.first) {
+      case 'user':
+        messages.add(ChatMessage.humanText(message.values.first));
+        break;
+      case 'assistant':
+        messages.add(ChatMessage.ai(message.values.first));
+        break;
+    }
+  }
+  return messages;
+}
+
+String userInfo(String name, String nativeLanguage, String interests) {
+  return "Name: $name\nNative Language: $nativeLanguage\nInterests: $interests\n";
 }
