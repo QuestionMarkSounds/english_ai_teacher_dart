@@ -8,13 +8,13 @@ JsonEncoder encoder =
 
 final class GeneratePlan
     extends Tool<Map<String, dynamic>, ToolOptions, String> {
-  final String userId;
-
-  GeneratePlan(this.userId)
+  final void Function(Map<String, dynamic> output) callback;
+  GeneratePlan(this.callback)
       : super(
             name: 'generatePlan',
             description: """
               Generate a personalized learning plan to help the user reach the next English proficiency level quickly.
+              If the user confirms their goal, generate a personalized learning plan.
 
               1. **Plan Structure**:
                 - **Goal X**: Defines the target level, duration, and lesson count.
@@ -39,14 +39,10 @@ final class GeneratePlan
     final ToolOptions? options,
   }) async {
     try {
-      File learningPlanFile = File('learning_plan.json');
-      // Assuming the map has the structure you expect.;
-      Map<String, dynamic> learningPlanDb =
-          jsonDecode(await learningPlanFile.readAsString());
-      learningPlanDb[userId] = toolInput;
-      await learningPlanFile.writeAsString(encoder.convert(learningPlanDb));
-
-      return toolInput.toString(); // Return the plan as output
+      final String output =
+          encoder.convert(toolInput); // Return the plan as output
+      callback(toolInput);
+      return output;
     } catch (e) {
       return "I don't know how to generate a plan.";
     }
@@ -61,8 +57,8 @@ final class GeneratePlan
 
 final class UpdateUserData
     extends Tool<Map<String, dynamic>, ToolOptions, String> {
-  final String userId;
-  UpdateUserData(this.userId)
+  final void Function(Map<String, dynamic> output) callback;
+  UpdateUserData(this.callback)
       : super(
             name: 'updateUserData',
             description: """
@@ -90,14 +86,6 @@ final class UpdateUserData
       final String currentLevel =
           toolInput['current_level_of_english'] as String;
 
-      final String userInformation = '''
-        Name: $name
-        Native Language: $nativeLanguage
-        Reason to Learn English: $reason
-        Interests: $interests
-        Current Level of English: $currentLevel
-      ''';
-
       final Map<String, dynamic> userInformationJson = {
         "Name": name,
         "Native Language": nativeLanguage,
@@ -105,13 +93,9 @@ final class UpdateUserData
         "Interests": interests,
         "Current Level of English": currentLevel,
       };
-      File userInfoFile = File('user_info.json');
-      Map<String, dynamic> userInfoDb =
-          jsonDecode(await userInfoFile.readAsString());
-      userInfoDb[userId] = userInformationJson;
-      await userInfoFile.writeAsString(encoder.convert(userInfoDb));
-
-      return userInformation; // Return the user information as output
+      callback(userInformationJson);
+      return encoder.convert(
+          userInformationJson); // Return the user information as output
     } catch (e) {
       return "I don't know how to process this data.";
     }

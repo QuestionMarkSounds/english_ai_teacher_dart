@@ -22,19 +22,26 @@ final memoryLlm = ConversationBufferMemory(returnMessages: true);
 File memoryFile = File('memory.json');
 late JsonMemoryManager memoryManager;
 
-final memoryJson = [];
+final memoryJson = json.decode(memoryFile.readAsStringSync());
 
 File userInfoFile = File('user_info.json');
 File learningPlanFile = File('learning_plan.json');
 
 void main() async {
-  OnboardingAgent onboardingAgent = await createOnboardingAgent(
-      userId: "q", filePath: memoryFile.path, chatModel: chatModel);
+  OnboardingAgent onboardingAgent = OnboardingAgent(
+      llm: chatModel,
+      updateUserCallback: (Map<String, dynamic> output) {
+        print("Upd user\n $output");
+      },
+      generatePlanCallback: (Map<String, dynamic> output) {
+        print("Gen plan\n $output");
+      },
+      toolUsageCallback: (tool) => print("BOUTA USE TOOL $tool"));
 
-  String response = await onboardingAgent.invoke(
-      "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.");
+  // String response = await onboardingAgent.invoke(
+  //     "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.");
 
-  print('AI: ${response}');
+  // print('AI: ${response}');
 
   while (true) {
     stdout.write('You: ');
@@ -44,8 +51,13 @@ void main() async {
       print('Goodbye!');
       break;
     }
+    List<Map<String, dynamic>> memoryInput = [];
 
-    String response = await onboardingAgent.invoke(userInput);
+    for (var i in memoryJson["user1"]) {
+      memoryInput.add(i);
+    }
+    String response = await onboardingAgent.stream(userInput, memoryInput,
+        userInfo("Mukhtar", "Armenian", "Watching TV, Politics"));
 
     print('AI: ${response}');
   }
