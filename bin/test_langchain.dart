@@ -29,7 +29,7 @@ File learningPlanFile = File('learning_plan.json');
 
 void main() async {
   OnboardingAgent onboardingAgent = await createOnboardingAgent(
-      userId: "andruhar", filePath: memoryFile.path, chatModel: chatModel);
+      userId: "q", filePath: memoryFile.path, chatModel: chatModel);
 
   String response = await onboardingAgent.invoke(
       "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.");

@@ -14,19 +14,24 @@ final class GeneratePlan
       : super(
             name: 'generatePlan',
             description: """
-    Generate a personalized learning plan based on the user's information.
-    If the user has confirmed their goal, generate a plan.
+              Generate a personalized learning plan to help the user reach the next English proficiency level quickly.
 
-    1. Structure the learning plan in the following format:
-      - **Goal X**: High-level goal title with total duration and total number of lessons.
-      - For each goal, divide it into subgoals:
-        - **Subgoal X.X**: Subgoal title with duration and total number of lessons.
-        - For each subgoal, list the lessons in sequence:
-          - **Lesson X.X.X**: Lesson title with duration (10-15 min max).
-      - Include optional practice and review lessons for consolidation at the end of each subgoal.
-    2. Use the user's stated goal to define the primary focus of the plan, and analyze their chat history to tailor lessons to their current proficiency, interests, and needs.
-    3. Ensure the total duration and number of lessons for each subgoal and goal are realistic, breaking down learning into manageable sessions.
-    """,
+              1. **Plan Structure**:
+                - **Goal X**: Defines the target level, duration, and lesson count.
+                - **Subgoal X.X**: Focuses on key skills with structured lessons.
+                - **Lesson X.X.X**: Short (10–15 min) sessions in sequence.
+                - Includes optional practice and review for reinforcement.
+
+              2. **Customization**:
+                - Tailored to the user’s proficiency, goals, and interests.
+                - Adjusted based on chat history for relevance.
+                - Ensures steady and measurable progress.
+
+              3. **Efficiency**:
+                - Lessons are focused and manageable.
+                - Duration and lesson count are realistic.
+                - Designed for rapid progression to the next level.
+              """,
             inputJsonSchema: generatePlanSchema);
   @override
   Future<String> invokeInternal(

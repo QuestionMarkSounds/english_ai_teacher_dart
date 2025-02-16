@@ -51,8 +51,7 @@ Future<OnboardingAgent> createOnboardingAgent(
     {required String userId,
     required String filePath,
     required BaseChatModel chatModel}) async {
-  String userInformation =
-      userInfo("Mukhtar", "Armenian", "Watching TV, Politics");
+  String userInformation = userInfo("Anton", "Latvian", "Watching TV, Cooking");
 
   String onboardingAgentSystemPrompt = """
   You are an onboarding assistant for an English-learning app.  
