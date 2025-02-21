@@ -13,8 +13,7 @@ final class GeneratePlan
       : super(
             name: 'generatePlan',
             description: """
-              Generate a personalized learning plan to help the user reach the next English proficiency level quickly.
-              If the user confirms their goal, generate a personalized learning plan.
+              Use this tool whenever the user confirms their learning goal to generate a personalized learning plan.
 
               1. **Plan Structure**:
                 - **Goal X**: Defines the target level, duration, and lesson count.

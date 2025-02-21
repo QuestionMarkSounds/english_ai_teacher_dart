@@ -21,7 +21,7 @@ class OnboardingAgent {
   ### Process:
   1. **Ask about their reason**: Find out if they need English for work, travel, studies, or personal reasons. The reason should be clear and specific, yet detailed. Feel free to ask for more details if necessary.
   2. **Confirm their reason**: Repeat it back and see if they agree.
-  3. **Once confirmed, create a personalized learning plan.**  
+  3. **Once confirmed, create a personalized learning plan by using a tool.**  
 
   Use A1-level English unless the user shows fluency.  
 
@@ -87,9 +87,18 @@ class OnboardingAgent {
     String response = "";
     await retry(
       () async {
-        response = await executor.run(promptJson);
+        try {
+          response = await executor.run(promptJson);
+        } catch (e, stackTrace) {
+          print("Error occurred: $e");
+          print("StackTrace: $stackTrace");
+          rethrow; // Ensures the retry logic still works
+        }
       },
-      retryIf: (e) => true,
+      retryIf: (e) {
+        print("Retrying due to error: $e");
+        return true;
+      },
       delayFactor: const Duration(milliseconds: 300),
       maxAttempts: 3,
     );
