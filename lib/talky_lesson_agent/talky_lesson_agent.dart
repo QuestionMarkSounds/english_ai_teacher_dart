@@ -2,8 +2,8 @@ import 'package:dotenv/dotenv.dart';
 import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
 import 'package:retry/retry.dart';
-import '../json_memory_manager.dart';
-// import 'tools/tools.dart';
+
+import '../src/helper.dart';
 
 var env = DotEnv()..load();
 
@@ -14,9 +14,8 @@ ChatOpenAI chatModel = ChatOpenAI(
 
 class TalkyLessonAgent {
   final BaseChatModel llm;
-  final BaseUserInfoChatMemory? memoryManager;
   final String proficiencyLevel;
-  List<ChatMessage> messages = [];
+  final String? topic;
   List<ChatMessage> assessmentMessages = [];
 
   final promptTemplate = ChatPromptTemplate.fromTemplates([
@@ -24,17 +23,20 @@ class TalkyLessonAgent {
   ]);
 
   TalkyLessonAgent(
-      {required this.llm, required this.proficiencyLevel, this.memoryManager});
+      {required this.llm, required this.proficiencyLevel, this.topic});
 
-  Future<String> askQuestion() async {
+  Future<Map<String, dynamic>> askQuestion(
+      List<Map<String, dynamic>> messageHistory,
+      Map<String, dynamic>? userInfo) async {
     final systemPrompt = ChatMessage.system('''
 Follow up on a conversation based on chat history. 
-Create an open ended question on a miscellaneous topic 
+Create a complex open ended question on a ${topic ?? "miscellaneous"} topic 
 (What do you think... What were you... etc.).
 
 Keep in mind user's proficiency level: $proficiencyLevel 
 
 ''');
+    final List<ChatMessage> messages = processMessageHistory(messageHistory);
     final prompt = PromptValue.chat([systemPrompt] + messages);
     String result = '';
     await retry(
@@ -47,10 +49,14 @@ Keep in mind user's proficiency level: $proficiencyLevel
       maxAttempts: 3,
     );
     messages.add(ChatMessage.ai(result));
-    return result;
+    return {"assistant": result};
   }
 
-  Future<String> replyToUser(String input) async {
+  Future<List<Map<String, dynamic>>> replyToUser(
+      String input,
+      List<Map<String, dynamic>> messageHistory,
+      Map<String, dynamic>? userInfo) async {
+    final List<ChatMessage> messages = processMessageHistory(messageHistory);
     messages.add(ChatMessage.humanText(input));
 
     final systemPrompt = ChatMessage.system('''
@@ -72,19 +78,25 @@ Keep in mind user's proficiency level: $proficiencyLevel
       maxAttempts: 3,
     );
     assessmentMessages.add(ChatMessage.ai(result));
-    return result;
+    return [
+      {"user": input},
+      {"assistant": result}
+    ];
   }
 
-  Future<String> completeLesson() async {
+  Future<Map<String, dynamic>> completeLesson(
+      List<Map<String, dynamic>> messageHistory,
+      Map<String, dynamic>? userInfo) async {
     final systemPrompt = ChatMessage.system('''
-Based on AI suggestions, compose a short summary of the lesson. 
-Congratulate user on lesson completion.
+  Based on AI suggestions, compose a short summary of the lesson. 
+  Congratulate user on lesson completion.
 
-Keep in mind user's proficiency level: $proficiencyLevel 
+  Keep in mind user's proficiency level: $proficiencyLevel 
 
-''');
+  ''');
     String result = '';
-    final prompt = PromptValue.chat([systemPrompt] + assessmentMessages);
+    final List<ChatMessage> messages = processMessageHistory(messageHistory);
+    final prompt = PromptValue.chat([systemPrompt] + messages);
     await retry(
       () async {
         final res = await llm.invoke(prompt);
@@ -95,22 +107,6 @@ Keep in mind user's proficiency level: $proficiencyLevel
       maxAttempts: 3,
     );
 
-    return result;
+    return {"assistant": result};
   }
 }
-
-// Future<TalkyLessonAgent> createTalkyLessonAgent(
-//     {required String userId,
-//     required String filePath,
-//     required BaseChatModel chatModel}) async {
-//   const String TalkyLessonAgentSystemPrompt = """
-//   You are an onboarding assistant for an English-learning app. Guide the user step by step to gather their name, native language, and learning goals.
-//   If the user confirms their goal, generate a personalized learning plan.
-//   If a plan is generated, confirm satisfaction before encouraging subscription.
-//   """;
-//   final memoryManager = await JsonMemoryManager.create(
-//       memoryFilePath: filePath,
-//       userId: userId,
-//       systemPrompt: TalkyLessonAgentSystemPrompt);
-//   return TalkyLessonAgent(llm: chatModel, memoryManager: memoryManager);
-// }
