@@ -27,7 +27,7 @@ initJsons(userId, userInfo, memoryJson, userInfoJson, learningPlanJson,
   learningPlanJson = json.decode(learningPlanFile.readAsStringSync());
 
   if (!userInfoJson.containsKey(userId)) {
-    userInfoJson[userId] = userInfo; // Ensure userInfo is passed as a parameter
+    userInfoJson[userId] = userInfo;
   }
 
   if (!learningPlanJson.containsKey(userId)) {
