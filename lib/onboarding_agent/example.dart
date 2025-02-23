@@ -26,17 +26,9 @@ initJsons(userId, userInfo, memoryJson, userInfoJson, learningPlanJson,
   userInfoJson = json.decode(userInfoFile.readAsStringSync());
   learningPlanJson = json.decode(learningPlanFile.readAsStringSync());
 
-  if (!userInfoJson.containsKey(userId)) {
-    userInfoJson[userId] = userInfo; // Ensure userInfo is passed as a parameter
-  }
-
-  if (!learningPlanJson.containsKey(userId)) {
-    learningPlanJson[userId] = {};
-  }
-
-  if (!memoryJson.containsKey(userId)) {
-    memoryJson[userId] = [];
-  }
+  userInfoJson[userId] = userInfo;
+  learningPlanJson[userId] = {};
+  memoryJson[userId] = [];
 
   memoryFile
       .writeAsStringSync(JsonEncoder.withIndent('  ').convert(memoryJson));
@@ -71,9 +63,9 @@ void main() async {
   Map<String, dynamic> userInfoJson = {};
   Map<String, dynamic> learningPlanJson = {};
 
-  File memoryFile = File('jsons/memory.json');
-  File userInfoFile = File('jsons/user_info.json');
-  File learningPlanFile = File('jsons/learning_plan.json');
+  File memoryFile = File('lib/onboarding_agent/jsons/memory.json');
+  File userInfoFile = File('lib/onboarding_agent/jsons/user_info.json');
+  File learningPlanFile = File('lib/onboarding_agent/jsons/learning_plan.json');
 
   (memoryJson, userInfoJson, learningPlanJson) = initJsons(
       userId,
@@ -84,8 +76,6 @@ void main() async {
       memoryFile,
       userInfoFile,
       learningPlanFile);
-
-  print(userInfoJson);
 
   // ----------------------------
   // Agent initialization section

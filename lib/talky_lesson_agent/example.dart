@@ -27,9 +27,9 @@ void main() async {
   TalkyLessonAgent agent =
       TalkyLessonAgent(proficiencyLevel: "A2", topic: "cars");
 
-  // -------------------------------------
+  // --------------------------------
   // Example of using the talky agent
-  // -------------------------------------
+  // --------------------------------
   int round = 0;
   while (round < maxRounds) {
     // The flow starts with the agent asking a question
