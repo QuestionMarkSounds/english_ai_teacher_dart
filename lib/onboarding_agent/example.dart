@@ -71,9 +71,9 @@ void main() async {
   Map<String, dynamic> userInfoJson = {};
   Map<String, dynamic> learningPlanJson = {};
 
-  File memoryFile = File('jsons/memory.json');
-  File userInfoFile = File('jsons/user_info.json');
-  File learningPlanFile = File('jsons/learning_plan.json');
+  File memoryFile = File('lib/onboarding_agent/jsons/memory.json');
+  File userInfoFile = File('lib/onboarding_agent/jsons/user_info.json');
+  File learningPlanFile = File('lib/onboarding_agent/jsons/learning_plan.json');
 
   (memoryJson, userInfoJson, learningPlanJson) = initJsons(
       userId,
