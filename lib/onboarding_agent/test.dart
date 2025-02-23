@@ -7,7 +7,7 @@ void main() async {
   // ------------------------
 
   // User ID
-  const userId = "benny";
+  // const userId = "benny";
 
   // User info
   Map<String, dynamic> userInfo = {

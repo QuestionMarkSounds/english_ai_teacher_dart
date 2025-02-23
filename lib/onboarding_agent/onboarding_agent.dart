@@ -3,7 +3,7 @@ import 'package:retry/retry.dart';
 import 'tools/tools.dart';
 
 import '../src/agent_executor_with_next_step_callback.dart';
-import '../src/globals.dart' show chatModel;
+import '../src/globals.dart';
 import '../src/helper.dart';
 
 // ----------------------------
@@ -21,6 +21,8 @@ class OnboardingAgent {
   final void Function(Map<String, dynamic> output) updateUserCallback;
   final void Function(Map<String, dynamic> output) generatePlanCallback;
   final void Function(String tool) toolUsageCallback;
+
+  // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
   You are an onboarding assistant for an English-learning app.  
   The user’s name, native language, and interests are provided.  
@@ -56,6 +58,7 @@ class OnboardingAgent {
   **User Information:** '{userInformation}'  
   """;
 
+  // Constructor
   OnboardingAgent(
       {required this.updateUserCallback,
       required this.generatePlanCallback,
@@ -83,6 +86,7 @@ class OnboardingAgent {
     );
   }
 
+  // Greet method. Used to start the conversation
   Future<String> greet(
       List<Map<String, dynamic>> messageHistory, String userInformation) async {
     final promptJson = promptTemplate.format({
@@ -95,13 +99,7 @@ class OnboardingAgent {
 
     await retry(
       () async {
-        try {
-          response = await executor.run(promptJson);
-        } catch (e, stackTrace) {
-          print("Error occurred: $e");
-          print("StackTrace: $stackTrace");
-          rethrow; // Ensures the retry logic still works
-        }
+        response = await executor.run(promptJson);
       },
       retryIf: (e) {
         print("Retrying due to error: $e");
@@ -113,6 +111,7 @@ class OnboardingAgent {
     return response;
   }
 
+  // Stream method. Used to continue the conversation and generate a response
   Future<String> stream(String input, List<Map<String, dynamic>> messageHistory,
       String userInformation) async {
     Map<String, dynamic> formattedPrompt = {
@@ -133,8 +132,4 @@ class OnboardingAgent {
 
     return response;
   }
-}
-
-String userInfo(String name, String nativeLanguage, String interests) {
-  return "Name: $name\nNative Language: $nativeLanguage\nInterests: $interests\n";
 }

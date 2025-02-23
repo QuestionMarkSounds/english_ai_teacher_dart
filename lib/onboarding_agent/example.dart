@@ -85,8 +85,6 @@ void main() async {
       userInfoFile,
       learningPlanFile);
 
-  print(userInfoJson);
-
   // ----------------------------
   // Agent initialization section
   // ----------------------------

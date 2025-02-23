@@ -7,7 +7,8 @@ import '../src/helper.dart';
 // ----------------------------
 // The main task of the talky
 // is to chat and provide immediate
-// feedback to the user.
+// feedback to the user, as well as
+// a final evaluation.
 // ----------------------------
 
 // Constructing the agent class
@@ -16,14 +17,10 @@ class TalkyLessonAgent {
   final String? topic;
   List<ChatMessage> assessmentMessages = [];
 
-  final promptTemplate = ChatPromptTemplate.fromTemplates([
-    // This is not used anywhere?
-    (ChatMessageType.human, '{question}'),
-  ]);
-
+  // Constructor
   TalkyLessonAgent({required this.proficiencyLevel, this.topic});
 
-  // Ask Question method
+  // Ask Question method. Used to ask the user a question
   Future<Map<String, dynamic>> askQuestion(
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
@@ -37,21 +34,21 @@ class TalkyLessonAgent {
       ''');
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     final prompt = PromptValue.chat([systemPrompt] + messages);
-    String result = '';
+    String response = '';
     await retry(
       () async {
         final res = await chatModel.invoke(prompt);
-        result = res.outputAsString;
+        response = res.outputAsString;
       },
       retryIf: (e) => true,
       delayFactor: const Duration(milliseconds: 300),
       maxAttempts: 3,
     );
-    messages.add(ChatMessage.ai(result));
-    return {"assistant": result};
+    messages.add(ChatMessage.ai(response));
+    return {"assistant": response};
   }
 
-  // Reply to User method
+  // Reply with Improvement method. Used to give user improvement suggestions
   Future<List<Map<String, dynamic>>> replyWithImprovement(
       String input,
       List<Map<String, dynamic>> messageHistory,
@@ -67,23 +64,24 @@ class TalkyLessonAgent {
       Keep in mind user's proficiency level: $proficiencyLevel 
       ''');
     final prompt = PromptValue.chat([systemPrompt] + messages);
-    String result = '';
+    String response = '';
     await retry(
       () async {
         final res = await chatModel.invoke(prompt);
-        result = res.outputAsString;
+        response = res.outputAsString;
       },
       retryIf: (e) => true,
       delayFactor: const Duration(milliseconds: 300),
       maxAttempts: 3,
     );
-    assessmentMessages.add(ChatMessage.ai(result));
+    assessmentMessages.add(ChatMessage.ai(response));
     return [
       {"user": input},
-      {"assistant": result}
+      {"assistant": response}
     ];
   }
 
+  // Complete Lesson method. Used to complete the lesson with a summary
   Future<Map<String, dynamic>> completeLesson(
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
@@ -94,19 +92,20 @@ class TalkyLessonAgent {
       Keep in mind user's proficiency level: $proficiencyLevel 
 
       ''');
-    String result = '';
+    String response = '';
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     final prompt = PromptValue.chat([systemPrompt] + messages);
+
     await retry(
       () async {
         final res = await chatModel.invoke(prompt);
-        result = res.outputAsString;
+        response = res.outputAsString;
       },
       retryIf: (e) => true,
       delayFactor: const Duration(milliseconds: 300),
       maxAttempts: 3,
     );
 
-    return {"assistant": result};
+    return {"assistant": response};
   }
 }
