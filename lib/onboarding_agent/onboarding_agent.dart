@@ -4,6 +4,7 @@ import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
 import '../json_memory_manager.dart';
 import '../agent_executor_with_next_step_callback.dart';
+import '../src/helper.dart';
 import 'tools/tools.dart';
 
 class OnboardingAgent {
@@ -131,22 +132,6 @@ class OnboardingAgent {
     );
     return response;
   }
-}
-
-List<ChatMessage> processMessageHistory(
-    List<Map<String, dynamic>> messageHistory) {
-  List<ChatMessage> messages = [];
-  for (Map<String, dynamic> message in messageHistory) {
-    switch (message.keys.first) {
-      case 'user':
-        messages.add(ChatMessage.humanText(message.values.first));
-        break;
-      case 'assistant':
-        messages.add(ChatMessage.ai(message.values.first));
-        break;
-    }
-  }
-  return messages;
 }
 
 String userInfo(String name, String nativeLanguage, String interests) {
