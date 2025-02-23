@@ -1,42 +1,86 @@
+import 'talky_lesson_agent.dart';
 import 'dart:io';
 
-import 'talky_lesson_agent.dart';
-
+// Example of using the talky agent with predefined inputs.
 void main() async {
-  int rounds = 0;
+  // ------------------------
+  // Predefined input section
+  // ------------------------
+
+  // How many rounds to play
   int maxRounds = 5;
-  TalkyLessonAgent agent =
-      TalkyLessonAgent(llm: chatModel, proficiencyLevel: "A2", topic: "cars");
 
-  List<Map<String, dynamic>> messageHistory = [];
-
+  // User info
   Map<String, dynamic> userInfo = {
     "name": "Mukhtar",
     "native language": "Armenian",
     "interests": "Watching TV, Politics"
   };
-  while (rounds < maxRounds) {
+
+  // Chat history
+  List<Map<String, dynamic>> messageHistory = [];
+
+  // ----------------------------
+  // Agent initialization section
+  // ----------------------------
+
+  TalkyLessonAgent agent =
+      TalkyLessonAgent(proficiencyLevel: "A2", topic: "cars");
+
+  // -------------------------------------
+  // Example of using the talky agent
+  // -------------------------------------
+  int round = 0;
+  while (round < maxRounds) {
+    // The flow starts with the agent asking a question
     Map<String, dynamic> response =
         await agent.askQuestion(messageHistory, userInfo);
-    print('AI: ${response["assistant"]}');
+    askQuestion(response);
     messageHistory.add(response);
+
+    // The user responds
     stdout.write('You: ');
     String? userInput = stdin.readLineSync();
-    messageHistory.add({"user": userInput});
-    if (userInput == null || userInput.toLowerCase() == 'exit') {
-      print('Goodbye!');
+
+    // Stop the flow if user input is null
+    if (userInput == null) {
       break;
     }
 
+    messageHistory.add({"user": userInput});
+
+    // The agent responds with an improvement suggestion
     List<Map<String, dynamic>> replyResponse =
-        await agent.replyToUser(userInput, messageHistory, userInfo);
+        await agent.replyWithImprovement(userInput, messageHistory, userInfo);
+    replyWithImprovement(replyResponse[1]["assistant"]);
     messageHistory.addAll(replyResponse);
-    print('AI: ${replyResponse[1]["assistant"]}');
-    rounds++;
+
+    // Next round
+    round++;
   }
 
+  // The agent completes the lesson after the last round
   Map<String, dynamic> response =
       await agent.completeLesson(messageHistory, userInfo);
+  completeLesson(response);
   messageHistory.add(response);
-  print('LESSON COMPLETED!\n\n$response');
+}
+
+// --------------------------
+// Callback functions section
+// --------------------------
+
+askQuestion(response) {
+  // Redefine the logic to commit to firebase user info.
+  print("\nAI Question: $response");
+}
+
+replyWithImprovement(response) {
+  // Redefine the logic to adjust frontend to show spinner, and commit plan to firebase.
+  print('\nAI Reply: $response');
+}
+
+completeLesson(response) {
+  // Redefine the logic to commit to firebase chat history.
+  print('\nAI Completion: $response');
 }

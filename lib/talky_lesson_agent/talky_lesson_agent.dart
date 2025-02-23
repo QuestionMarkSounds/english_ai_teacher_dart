@@ -1,47 +1,46 @@
-import 'package:dotenv/dotenv.dart';
 import 'package:langchain/langchain.dart';
-import 'package:langchain_openai/langchain_openai.dart';
 import 'package:retry/retry.dart';
 
+import '../src/globals.dart';
 import '../src/helper.dart';
 
-var env = DotEnv()..load();
+// ----------------------------
+// The main task of the talky
+// is to chat and provide immediate
+// feedback to the user.
+// ----------------------------
 
-ChatOpenAI chatModel = ChatOpenAI(
-  apiKey: env["OPENAI_API_KEY"],
-  defaultOptions: ChatOpenAIOptions(model: "gpt-4o-mini"),
-);
-
+// Constructing the agent class
 class TalkyLessonAgent {
-  final BaseChatModel llm;
   final String proficiencyLevel;
   final String? topic;
   List<ChatMessage> assessmentMessages = [];
 
   final promptTemplate = ChatPromptTemplate.fromTemplates([
+    // This is not used anywhere?
     (ChatMessageType.human, '{question}'),
   ]);
 
-  TalkyLessonAgent(
-      {required this.llm, required this.proficiencyLevel, this.topic});
+  TalkyLessonAgent({required this.proficiencyLevel, this.topic});
 
+  // Ask Question method
   Future<Map<String, dynamic>> askQuestion(
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
     final systemPrompt = ChatMessage.system('''
-Follow up on a conversation based on chat history. 
-Create a complex open ended question on a ${topic ?? "miscellaneous"} topic 
-(What do you think... What were you... etc.).
+      Follow up on a conversation based on chat history. 
+      Create a complex open ended question on a ${topic ?? "miscellaneous"} topic 
+      (What do you think... What were you... etc.).
 
-Keep in mind user's proficiency level: $proficiencyLevel 
+      Keep in mind user's proficiency level: $proficiencyLevel 
 
-''');
+      ''');
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     final prompt = PromptValue.chat([systemPrompt] + messages);
     String result = '';
     await retry(
       () async {
-        final res = await llm.invoke(prompt);
+        final res = await chatModel.invoke(prompt);
         result = res.outputAsString;
       },
       retryIf: (e) => true,
@@ -52,7 +51,8 @@ Keep in mind user's proficiency level: $proficiencyLevel
     return {"assistant": result};
   }
 
-  Future<List<Map<String, dynamic>>> replyToUser(
+  // Reply to User method
+  Future<List<Map<String, dynamic>>> replyWithImprovement(
       String input,
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
@@ -60,17 +60,17 @@ Keep in mind user's proficiency level: $proficiencyLevel
     messages.add(ChatMessage.humanText(input));
 
     final systemPrompt = ChatMessage.system('''
-You are an English language teacher. Analyse the latest user message.
-Respond with a short assessment of English language proficiency and 
-improvement suggestions if appropriate. Max 5 sentences. Don't use bullet points. Include rephrased user message.
+      You are an English language teacher. Analyse the latest user message.
+      Respond with a short assessment of English language proficiency and 
+      improvement suggestions if appropriate. Max 5 sentences. Don't use bullet points. Include rephrased user message.
 
-Keep in mind user's proficiency level: $proficiencyLevel 
-''');
+      Keep in mind user's proficiency level: $proficiencyLevel 
+      ''');
     final prompt = PromptValue.chat([systemPrompt] + messages);
     String result = '';
     await retry(
       () async {
-        final res = await llm.invoke(prompt);
+        final res = await chatModel.invoke(prompt);
         result = res.outputAsString;
       },
       retryIf: (e) => true,
@@ -88,18 +88,18 @@ Keep in mind user's proficiency level: $proficiencyLevel
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
     final systemPrompt = ChatMessage.system('''
-  Based on AI suggestions, compose a short summary of the lesson. 
-  Congratulate user on lesson completion.
+      Based on AI suggestions, compose a short summary of the lesson. 
+      Congratulate user on lesson completion.
 
-  Keep in mind user's proficiency level: $proficiencyLevel 
+      Keep in mind user's proficiency level: $proficiencyLevel 
 
-  ''');
+      ''');
     String result = '';
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     final prompt = PromptValue.chat([systemPrompt] + messages);
     await retry(
       () async {
-        final res = await llm.invoke(prompt);
+        final res = await chatModel.invoke(prompt);
         result = res.outputAsString;
       },
       retryIf: (e) => true,

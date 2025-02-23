@@ -1,14 +1,21 @@
-import 'dart:math';
-
 import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
-import '../json_memory_manager.dart';
-import '../agent_executor_with_next_step_callback.dart';
-import '../src/helper.dart';
 import 'tools/tools.dart';
 
+import '../src/agent_executor_with_next_step_callback.dart';
+import '../src/globals.dart' show chatModel;
+import '../src/helper.dart';
+
+// ----------------------------
+// The main task of the onboarder
+// is to confirm the users reason
+// for learning English, and generate
+// a personalized learning plan based
+// on that.
+// ----------------------------
+
+// Constructing the agent class
 class OnboardingAgent {
-  final BaseChatModel llm;
   late BaseChain executor;
   late ChatPromptTemplate promptTemplate;
   final void Function(Map<String, dynamic> output) updateUserCallback;
@@ -50,8 +57,7 @@ class OnboardingAgent {
   """;
 
   OnboardingAgent(
-      {required this.llm,
-      required this.updateUserCallback,
+      {required this.updateUserCallback,
       required this.generatePlanCallback,
       required this.toolUsageCallback}) {
     promptTemplate = ChatPromptTemplate.fromTemplates([
@@ -60,7 +66,7 @@ class OnboardingAgent {
       (ChatMessageType.human, '{question}'),
     ]);
     final agent = ToolsAgent.fromLLMAndTools(
-        llm: llm,
+        llm: chatModel,
         tools: [
           UpdateUserData(updateUserCallback),
           GeneratePlan(generatePlanCallback)
@@ -86,6 +92,7 @@ class OnboardingAgent {
       'userInformation': userInformation
     });
     String response = "";
+
     await retry(
       () async {
         try {
@@ -117,19 +124,13 @@ class OnboardingAgent {
 
     await retry(
       () async {
-        await retry(
-          () async {
-            response = (await executor.call(formattedPrompt))["output"];
-          },
-          retryIf: (e) => true,
-          delayFactor: const Duration(milliseconds: 300),
-          maxAttempts: 3,
-        );
+        response = (await executor.call(formattedPrompt))["output"];
       },
       retryIf: (e) => true,
       delayFactor: const Duration(milliseconds: 300),
       maxAttempts: 3,
     );
+
     return response;
   }
 }
