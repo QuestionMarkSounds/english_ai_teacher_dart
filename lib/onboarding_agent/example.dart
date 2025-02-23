@@ -26,17 +26,9 @@ initJsons(userId, userInfo, memoryJson, userInfoJson, learningPlanJson,
   userInfoJson = json.decode(userInfoFile.readAsStringSync());
   learningPlanJson = json.decode(learningPlanFile.readAsStringSync());
 
-  if (!userInfoJson.containsKey(userId)) {
-    userInfoJson[userId] = userInfo;
-  }
-
-  if (!learningPlanJson.containsKey(userId)) {
-    learningPlanJson[userId] = {};
-  }
-
-  if (!memoryJson.containsKey(userId)) {
-    memoryJson[userId] = [];
-  }
+  userInfoJson[userId] = userInfo;
+  learningPlanJson[userId] = {};
+  memoryJson[userId] = [];
 
   memoryFile
       .writeAsStringSync(JsonEncoder.withIndent('  ').convert(memoryJson));
