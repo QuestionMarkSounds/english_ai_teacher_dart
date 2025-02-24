@@ -14,7 +14,8 @@ void main() async {
   Map<String, dynamic> userInfo = {
     "name": "Mukhtar",
     "native language": "Armenian",
-    "interests": "Watching TV, Politics"
+    "interests": "Watching TV, Politics",
+    "current level of english": "A2",
   };
 
   // Chat history
@@ -24,8 +25,8 @@ void main() async {
   // Agent initialization section
   // ----------------------------
 
-  TalkyLessonAgent agent =
-      TalkyLessonAgent(proficiencyLevel: "A2", topic: "cars");
+  TalkyLessonAgent agent = TalkyLessonAgent(
+      proficiencyLevel: userInfo["current level of english"], topic: "cars");
 
   // --------------------------------
   // Example of using the talky agent
