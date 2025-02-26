@@ -74,7 +74,7 @@ class OnboardingAgent {
         llm: chatModel,
         tools: [
           UpdateUserData(updateUserCallback),
-          GeneratePlan(generatePlanCallback)
+          GeneratePlan(generatePlanCallback),
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
             onboardingAgentSystemPrompt),

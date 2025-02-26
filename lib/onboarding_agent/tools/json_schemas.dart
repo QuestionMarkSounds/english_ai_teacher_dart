@@ -1,3 +1,7 @@
+// String timeFormatPrompt = " Formated as Y-M-W-D where Y is number of years, M is number of outstanding months, W is number of outstanding weeks and D is number of outstanding days.";
+String timeFormatPrompt =
+    """Formatted as an integer and a character corresponding to duration (2D, 3W, 2M, 1Y). For example: 2D - 2 days. 3W - 3 weeks. 2M - 2 months. 1Y - 1 year.""";
+
 Map<String, dynamic> generatePlanSchema = {
   '\$defs': {
     'Goal': {
@@ -5,7 +9,12 @@ Map<String, dynamic> generatePlanSchema = {
         'name': {'description': 'The name of the goal.', 'type': 'string'},
         'duration': {
           'description':
-              'The duration of the goal, as a sum of subgoals durations.',
+              'The duration of the goal, as a sum of this goal\'s subgoals durations.',
+          'type': 'string'
+        },
+        'duration_formatted': {
+          'description':
+              'The duration of the goal, as a sum of this goal\'s subgoals durations. $timeFormatPrompt',
           'type': 'string'
         },
         'subgoals': {
@@ -14,18 +23,7 @@ Map<String, dynamic> generatePlanSchema = {
           'type': 'array'
         }
       },
-      'required': ['name', 'duration', 'subgoals'],
-      'type': 'object'
-    },
-    'Lesson': {
-      'properties': {
-        'name': {'description': 'The name of the lesson.', 'type': 'string'},
-        'duration': {
-          'description': 'The duration of the lesson, maximum 15 minutes.',
-          'type': 'string'
-        }
-      },
-      'required': ['name', 'duration'],
+      'required': ['name', 'duration', 'duration_formatted', 'subgoals'],
       'type': 'object'
     },
     'Subgoal': {
@@ -36,30 +34,55 @@ Map<String, dynamic> generatePlanSchema = {
               'The duration of the subgoal, as a sum of lessons durations.',
           'type': 'string'
         },
+        'duration_formatted': {
+          'description':
+              'The duration of the subgoal, as a sum of lessons durations. $timeFormatPrompt',
+          'type': 'string'
+        },
         'lessons': {
           'description': 'The lessons of the subgoal.',
           'items': {'\$ref': '#/\$defs/Lesson'},
+          'minItems': 1,
           'type': 'array'
         }
       },
-      'required': ['name', 'duration', 'lessons'],
+      'required': ['name', 'duration', 'duration_formatted', 'lessons'],
+      'type': 'object'
+    },
+    'Lesson': {
+      'properties': {
+        'title': {'description': 'The name of the lesson.', 'type': 'string'},
+        'duration': {
+          'description':
+              'The duration of the lesson in minutes, maximum 15 minutes.',
+          'type': 'integer',
+          'minimum': 5,
+          'maximum': 15
+        }
+      },
+      'required': ['name', 'duration'],
       'type': 'object'
     }
   },
   'properties': {
     'name': {'description': 'The name of the plan.', 'type': 'string'},
+    'goals': {
+      'description': 'The goals of the plan, minimum 3, maximum 5.',
+      'items': {'\$ref': '#/\$defs/Goal'},
+      'type': 'array'
+    },
     'duration': {
       'description':
           'The duration of the plan, as a sum of goals durations. Minimum 1 month.',
       'type': 'string'
     },
-    'goals': {
-      'description': 'The goals of the plan, minimum 3, maximum 5.',
-      'items': {'\$ref': '#/\$defs/Goal'},
-      'type': 'array'
+    'duration_formatted': {
+      'description':
+          'The duration of the plan, as a sum of this plan\'s goals durations. Minimum 1 month. $timeFormatPrompt',
+      'type': 'string'
     }
   },
-  'required': ['name', 'duration', 'goals'],
+  'required': ['name', 'duration', 'duration_formatted', 'goals'],
   'type': 'object'
 };
 

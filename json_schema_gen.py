@@ -70,6 +70,7 @@ class ParaphrasingAndSummarization(BaseModel):
 class TalkyAssesmentResponse(BaseModel):
     mistakes_present: bool = Field("True if mistakes are present, False if not")
     response: str = Field("Response to the prompt")
+    number: int
 
 ta = TypeAdapter(TalkyAssesmentResponse)
 ta_schema = ta.json_schema()
