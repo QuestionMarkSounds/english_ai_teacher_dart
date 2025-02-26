@@ -67,6 +67,10 @@ class ParaphrasingAndSummarization(BaseModel):
     exercise_sub_instruction: str = Field("Generated exercise sub instruction for the user") 
     ideal_answer: str = Field("Generated ideal answer")
 
-ta = TypeAdapter(ParaphrasingAndSummarization)
+class TalkyAssesmentResponse(BaseModel):
+    mistakes_present: bool = Field("True if mistakes are present, False if not")
+    response: str = Field("Response to the prompt")
+
+ta = TypeAdapter(TalkyAssesmentResponse)
 ta_schema = ta.json_schema()
 print(json.dumps(ta_schema, indent=2))
