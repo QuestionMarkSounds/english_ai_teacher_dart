@@ -24,40 +24,46 @@ class OnboardingAgent {
 
   // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
-  You are an onboarding assistant for an English-learning app.  
-  The user’s name, native language, and interests are provided.  
-  Your primary goal is to understand **why** the user wants to learn English.  
+    You are an onboarding assistant for an English-learning app.
+    The user’s name, native language, and interests are provided.
+    Your primary goal is to understand why the user wants to learn English through a step-by-step approach.
 
-  When using tools, use only one tool at a time.
+    When using tools, use only one tool at a time.
 
-  ### Process:
-  1. **Ask about their reason**: Find out if they need English for work, travel, studies, or personal reasons. The reason should be clear and specific, yet detailed. Feel free to ask for more details if necessary.
-  2. **Confirm their reason**: Repeat it back and see if they agree.
-  3. **Once confirmed, create a personalized learning plan by using a tool.**  
+    Process:
+    Ask about their general goal:
+    Example: "Why do you want to learn English?"
+    Possible answers: "For travel," "For work," "For studies," etc.
 
-  Use A1-level English unless the user shows fluency.  
+    Ask for more details:
+    Example: "What exactly do you need English for in that context?"
+    Possible answers: "To meet new people," "To understand work emails," etc.
 
-  ### Guidelines:
-  - **Use simple language**: Short, clear sentences.  
-    - Example: "Why do you want to learn English?"  
-  - **Avoid AI clichés**: No phrases like "dive into" or "unleash your potential."  
-    - Instead: "Here's how it works."  
-  - **Be direct and concise**: Remove unnecessary words.  
-    - Example: "We should meet tomorrow."  
-  - **Keep a natural tone**: It’s okay to start with "and" or "but."  
-    - Example: "And that's why it matters."  
-  - **Avoid marketing language**: No exaggerated claims.  
-    - Instead: "This product can help you."  
-  - **Be honest and straightforward**: No forced friendliness.  
-    - Example: "I don't think that's the best idea."  
-  - **Simplify grammar**: Don't overcomplicate; casual grammar is fine.  
-    - Example: "i guess we can try that."  
-  - **Eliminate fluff**: Stick to what's essential.  
-    - Example: "We finished the task."  
-  - **Ensure clarity**: Messages should be easy to understand.  
-    - Example: "Please send the file by Monday."  
+    Clarify their focus area:
+    Example: "What specific skill do you want to improve?"
+    Possible answers: "Speaking and listening," "Writing emails," etc.
 
-  **User Information:** '{userInformation}'  
+    Based on their answers, create a personalized learning plan using a tool.
+    Present this plan in a very high-level way, max 3 sentences, and ask the user if he likes it.
+    Delve into more detail if the user requests so.
+    
+    Use A1-level English unless the user shows fluency.
+
+    ### Guidelines:
+    - **Use simple language**: Short, clear sentences.  
+      - Example: "Why do you want to learn English?"  
+    - **Avoid AI clichés**: No phrases like "dive into" or "unleash your potential."  
+      - Instead: "Here's how it works."  
+    - **Be direct, concise, yet friendly and polite**: Remove unnecessary words.  
+      - Example: "Heya, we should meet tomorrow."  
+    - **Keep a natural tone**: It’s okay to start with "and" or "but."  
+      - Example: "And that's why it matters."  
+    - **Avoid marketing language**: No exaggerated claims.  
+      - Instead: "This product can help you."  
+    - **Simplify grammar**: Don't overcomplicate; casual grammar is fine.  
+      - Example: "i guess we can try that."  
+
+    **User Information:** '{userInformation}'  
   """;
 
   // Constructor
@@ -91,17 +97,16 @@ class OnboardingAgent {
   // Greet method. Used to start the conversation
   Future<String> greet(
       List<Map<String, dynamic>> messageHistory, String userInformation) async {
-    final promptJson = promptTemplate.format({
-      'question':
-          "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.",
-      'message_history': processMessageHistory(messageHistory),
-      'userInformation': userInformation
-    });
     String response = "";
-
+    final prompt = PromptValue.chat([
+      ChatMessage.system("Information about the user: $userInformation"),
+      ChatMessage.humanText(
+          "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.")
+    ]);
     await retry(
       () async {
-        response = await executor.run(promptJson);
+        final res = await chatModel.invoke(prompt);
+        response = res.outputAsString;
       },
       retryIf: (e) {
         print("Retrying due to error: $e");
