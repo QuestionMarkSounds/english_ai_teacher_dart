@@ -60,7 +60,7 @@ class TalkyLessonAgent {
     final promptTemplate = ChatPromptTemplate.fromTemplates([
       (
         ChatMessageType.system,
-        '''
+      '''
       You are an English language teacher. Analyse the latest user message.
       Respond with a short assessment of English language proficiency and 
       improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.

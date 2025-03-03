@@ -96,6 +96,15 @@ void main() async {
   // -------------------------------------
   // Example of using the onboarding agent
   // -------------------------------------
+
+  List<Map<String, dynamic>> messageHistory =
+      (memoryJson[userId] as List<dynamic>)
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
+
+  String response = await onboardingAgent.greet(messageHistory, userInfo.toString());
+  replyToUser(memoryJson, memoryFile, userId, response);
+
   while (true) {
     // User input
     stdout.write('You: ');
