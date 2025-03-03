@@ -89,11 +89,22 @@ void main() async {
       generatePlanCallback: (Map<String, dynamic> output) {
         savePlan(learningPlanJson, learningPlanFile, userId, output);
       },
-      toolUsageCallback: (tool) => print("\n\nABOUT TO USE TOOL: $tool"));
+      toolUsageCallback: (tool) => print("\n\nABOUT TO USE TOOL: $tool"),
+      commitPlanCallback: (userID) =>
+          print("\n\nCOMMIT PLAN TO USER: ${userID ?? "<Anonymous>"}"));
 
   // -------------------------------------
   // Example of using the onboarding agent
   // -------------------------------------
+
+  List<Map<String, dynamic>> messageHistory =
+      (memoryJson[userId] as List<dynamic>)
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
+
+  String response = await onboardingAgent.greet(messageHistory, userInfo.toString());
+  replyToUser(memoryJson, memoryFile, userId, response);
+
   while (true) {
     // User input
     stdout.write('You: ');

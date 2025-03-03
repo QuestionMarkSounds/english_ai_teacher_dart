@@ -7,3 +7,8 @@ ChatOpenAI chatModel = ChatOpenAI(
   apiKey: env["OPENAI_API_KEY"],
   defaultOptions: ChatOpenAIOptions(model: "gpt-4o-mini"),
 );
+
+ChatOpenAI smartChatModel = ChatOpenAI(
+  apiKey: env["OPENAI_API_KEY"],
+  defaultOptions: ChatOpenAIOptions(model: "o3-mini"),
+);
