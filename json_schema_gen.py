@@ -2,6 +2,14 @@ from pydantic import BaseModel, TypeAdapter, Field
 import json 
 from typing import Literal, List
 
+class Goal(BaseModel):
+    summary: str = Field(..., title="Generated exercise name")
+
+class LearningPlan(BaseModel):
+    plan: list[Goal] = Field(..., title="Generated exercise name")
+
+
+
 class DialogueMessage(BaseModel):
     role: Literal["A", "B"] = Field("Role of the character")
     name: str = Field("Name of the character")
