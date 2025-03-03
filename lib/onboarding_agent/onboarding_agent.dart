@@ -21,6 +21,8 @@ class OnboardingAgent {
   final void Function(Map<String, dynamic> output) updateUserCallback;
   final void Function(Map<String, dynamic> output) generatePlanCallback;
   final void Function(String tool) toolUsageCallback;
+  final void Function(String? userID) commitPlanCallback;
+  final String? userID;
 
   // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
@@ -34,6 +36,7 @@ class OnboardingAgent {
   1. **Ask about their reason**: Find out if they need English for work, travel, studies, or personal reasons. The reason should be clear and specific, yet detailed. Feel free to ask for more details if necessary.
   2. **Confirm their reason**: Repeat it back and see if they agree.
   3. **Once confirmed, create a personalized learning plan by using a tool.**  
+  4. **Once the user is satisfied with a plan, trigger a tool that will commit the plan to their account.**
 
   Use A1-level English unless the user shows fluency.  
 
@@ -61,10 +64,13 @@ class OnboardingAgent {
   """;
 
   // Constructor
-  OnboardingAgent(
-      {required this.updateUserCallback,
-      required this.generatePlanCallback,
-      required this.toolUsageCallback}) {
+  OnboardingAgent({
+    required this.updateUserCallback,
+    required this.generatePlanCallback,
+    required this.toolUsageCallback,
+    required this.commitPlanCallback,
+    this.userID,
+  }) {
     promptTemplate = ChatPromptTemplate.fromTemplates([
       (ChatMessageType.system, onboardingAgentSystemPrompt),
       (ChatMessageType.messagesPlaceholder, 'message_history'),
@@ -75,6 +81,7 @@ class OnboardingAgent {
         tools: [
           UpdateUserData(updateUserCallback),
           GeneratePlan(generatePlanCallback),
+          CommitPlanToUserAccount(commitPlanCallback, userID)
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
             onboardingAgentSystemPrompt),

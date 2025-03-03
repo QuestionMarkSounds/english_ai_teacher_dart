@@ -7,6 +7,25 @@ import 'json_schemas.dart';
 JsonEncoder encoder =
     JsonEncoder.withIndent('  '); // '  ' for 2-space indentation
 
+final class CommitPlanToUserAccount extends StringTool {
+  final String? userID;
+  final void Function(String?) callback;
+  CommitPlanToUserAccount(this.callback, this.userID)
+      : super(
+            name: 'commitPlanToUserAccount',
+            description:
+                'Commits generated plan to user account. No need to input the plan into this tool.');
+
+  @override
+  Future<String> invokeInternal(
+    final String toolInput, {
+    final ToolOptions? options,
+  }) async {
+    callback(userID);
+    return "Plan committed to user account.";
+  }
+}
+
 final class GeneratePlan
     extends Tool<Map<String, dynamic>, ToolOptions, String> {
   final void Function(Map<String, dynamic> output) callback;

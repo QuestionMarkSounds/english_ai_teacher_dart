@@ -46,7 +46,9 @@ void main() async {
       generatePlanCallback: (Map<String, dynamic> output) {
         savePlan(output);
       },
-      toolUsageCallback: (tool) => print("\n\nABOUT TO USE TOOL: $tool"));
+      toolUsageCallback: (tool) => print("\n\nABOUT TO USE TOOL: $tool"),
+      commitPlanCallback: (userID) =>
+          print("\n\nCOMMIT PLAN TO USER: ${userID ?? "<Anonymous>"}"));
 
   // -------------------------------------
   // Example of using the onboarding agent
