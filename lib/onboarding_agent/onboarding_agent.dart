@@ -85,7 +85,7 @@ class OnboardingAgent {
         llm: chatModel,
         tools: [
           UpdateUserData(updateUserCallback),
-          GeneratePlan(generatePlanCallback),
+          GeneratePlanSmartLlm(generatePlanCallback, smartChatModel),
           CommitPlanToUserAccount(commitPlanCallback, userID)
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
