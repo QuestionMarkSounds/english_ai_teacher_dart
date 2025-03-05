@@ -24,9 +24,11 @@ void main() async {
   // ----------------------------
   // Agent initialization section
   // ----------------------------
-
+  String lessonSystemPrompt =
+      "Create open-ended questions about the importance of knowing how to find places in a foreign country. Ask Mukhtar what he thinks are the most essential places to locate while traveling.";
   TalkyLessonAgent agent = TalkyLessonAgent(
-      proficiencyLevel: userInfo["current level of english"], topic: "cars");
+      proficiencyLevel: userInfo["current level of english"],
+      lessonSystemPrompt: lessonSystemPrompt);
 
   // --------------------------------
   // Example of using the talky agent
