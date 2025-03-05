@@ -78,36 +78,39 @@ final class GeneratePlanSmartLlm extends StringTool {
       : super(name: 'generatePlan', description: """
               Use this tool whenever the user confirms their learning goal to generate a personalized learning plan.
               This tool calls a plan generator assistant. Make sure you provide a detailed plan and mention details about the user so the assistant can generate the best plan.
-              1. **Plan Structure**:
-                - **Goal X**: Defines the target level, duration, and lesson count.
-                - **Subgoal X.X**: Focuses on key skills with structured lessons.
-                - **Lesson X.X.X**: Short (10–15 min) sessions in sequence.
-                - Includes optional practice and review for reinforcement.
               """) {
     final promptTemplate = ChatPromptTemplate.fromTemplates(
       [
         (
           ChatMessageType.system,
           """
-            Generate a personalized learning plan based on the information provided in the input.
+            You are an expert English tutor. Your task is to generate a structured and detailed learning plan based on the user's details. Ensure the plan follows a logical progression, considering the user's current level, goals, and available time.
 
-            1. **Plan Structure**:
-              - **Goal X**: Defines the target level, duration, and lesson count. Provide a name, duration, and subgoals for the goal.
-              - **Subgoal X.X**: Focuses on key skills with structured lessons. Provide a name, duration, and lessons for each subgoal.
-              - **Lesson X.X.X**: Short (10–15 min) sessions in sequence. Provide a name and duration (integer) in minutes for each lesson.
-              - Includes optional practice and review for reinforcement.
+            ## Key Guidelines:
+            1. **Level Progression:**  
+              - If the user wants to increase their level, **focus the goal of the plan on the next achievable step (e.g., A2 → B1, not A2 → C1 directly)**.  
 
-            2. **Customization**:
-              - Tailored to the user’s proficiency, goals, and interests.
-              - Adjusted based on chat history for relevance.
-              - Ensures steady and measurable progress.
+            2. **Time Commitment & Learning Pacing:**  
+              - Adjust the intensity of the plan based on the user's available hours.  
+              - For **15+ hours per week**, prioritize structured immersion (daily speaking, in-depth discussions).  
+              - For **fewer hours**, focus on high-impact activities (role-playing, key vocabulary usage).  
 
-            3. **Efficiency**:
-              - Lessons are focused and manageable.
-              - Duration and lesson count are realistic.
-              - Designed for rapid progression to the next level.
+            3. **Engagement & Active Learning:**  
+              - The user cannot use external tools, so the plan must rely on **chat-based learning** techniques.  
+              - Prioritize **conversation-based exercises** (role-playing, debates, storytelling) over passive learning.  
+              - Incorporate **real-world application**, such as discussing news, explaining interests, or summarizing content.  
 
-            input: {input}
+            4. **Feedback & Progress Tracking:**  
+              - Encourage self-assessment (recording progress, summarizing key takeaways).  
+              - Provide strategies for reinforcement (e.g., reviewing previous discussions, reusing learned vocabulary).  
+
+            ## Expected Output Structure:
+            The learning plan should be structured in a json format.
+
+            Each goal should take approximately 1 month to complete.
+            Each subgoal should take approximately 1 week to complete.
+
+            Ensure the plan is **practical, engaging, and adaptable** to different learning paces. 
             """
         ),
       ],
