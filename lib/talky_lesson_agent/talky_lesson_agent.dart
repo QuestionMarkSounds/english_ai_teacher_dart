@@ -15,11 +15,13 @@ import '../src/helper.dart';
 // Constructing the agent class
 class TalkyLessonAgent {
   final String proficiencyLevel;
-  final String? topic;
+  final String lessonSystemPrompt;
+
   List<ChatMessage> assessmentMessages = [];
 
   // Constructor
-  TalkyLessonAgent({required this.proficiencyLevel, this.topic});
+  TalkyLessonAgent(
+      {required this.proficiencyLevel, required this.lessonSystemPrompt});
 
   // Ask Question method. Used to ask the user a question
   Future<Map<String, dynamic>> askQuestion(
@@ -27,8 +29,7 @@ class TalkyLessonAgent {
       Map<String, dynamic>? userInfo) async {
     final systemPrompt = ChatMessage.system('''
       Follow up on a conversation based on chat history. 
-      Create a complex open ended question on a ${topic ?? "miscellaneous"} topic 
-      (What do you think... What were you... etc.).
+      $lessonSystemPrompt. 
 
       Keep in mind user's proficiency level: $proficiencyLevel 
 
@@ -60,7 +61,7 @@ class TalkyLessonAgent {
     final promptTemplate = ChatPromptTemplate.fromTemplates([
       (
         ChatMessageType.system,
-      '''
+        '''
       You are an English language teacher. Analyse the latest user message.
       Respond with a short assessment of English language proficiency and 
       improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.
