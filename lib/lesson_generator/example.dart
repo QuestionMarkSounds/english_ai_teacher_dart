@@ -17,10 +17,6 @@ void main() async {
         "english level": "A2"
       },
       numberOfLessons: 10);
-  int index = 1;
-  for (Map<String, dynamic> lesson in lessons) {
-    print("----------------------\n\nLesson $index");
-    print(JsonEncoder.withIndent('  ').convert(lesson));
-    index++;
-  }
+
+  print(JsonEncoder.withIndent('  ').convert(lessons));
 }

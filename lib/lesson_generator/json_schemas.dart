@@ -8,7 +8,7 @@ Map<String, dynamic> lessonGenSchema = {
           "type": "string"
         },
         "system_prompt": {
-          "default": "Exercise main instruction sentence for the generator",
+          "default": "AI tutor instructions to facilitate the lesson",
           "title": "System Prompt",
           "type": "string"
         },

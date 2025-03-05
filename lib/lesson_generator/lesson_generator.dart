@@ -29,21 +29,29 @@ Future<List<dynamic>> generateLessons({
       (
         ChatMessageType.system,
         """
-        Create $numberOfLessons exercise constructors for a subgoal named "$subgoalName" with a duration of $subgoalDuration minutes.
+        Generate a structured list of $numberOfLessons lessons for the subgoal "$subgoalName" under the goal "$goalName" in the "$planName" plan. 
 
-        Use the following information:
+        Each lesson should be represented as a JSON object with the following structure:
 
-        The complete exercise will be generated later by a large language model. 
-        Your task is to make a system prompt for a conversational LLM that will guide LLM to ask user questions and maintain conversation.
-        Use an example system prompt from below when creating the system prompt.:
+          "name": "<Lesson Title>",
+          "system_prompt": "<AI tutor instructions to facilitate the lesson>",
+          "duration": <Lesson Duration in minutes>
 
-        Output system prompt example: ${exerciseTypes[exerciseType]["prompt_example"]}.
+        ### Requirements:
+        - Ensure each lesson progressively helps the user achieve the subgoal "$subgoalName".
+        - Follow the exercise type approach: ${exerciseTypes[exerciseType]["description"]}.
+        - Adapt each lesson to match the user's English proficiency level: **${userInfo["english level"]}**.
+        - The **system_prompt must be written in third-person, addressing the AI tutor** (e.g., "You are an AI Language Learning tutor...").
+        - **Do not** address the user directly. Instead, structure prompts as instructions for an AI tutor.
+        - Use the user's details for personalization: ${userInfo.toString().replaceAll("{", "").replaceAll("}", "")}.
 
-        Additional information:
-        - Exercise description: ${exerciseTypes[exerciseType]["description"]}
-        - Information about the user: ${userInfo.toString().replaceAll("{", "").replaceAll("}", "")}
-        - Plan name: $planName
-        - Goal name: $goalName
+        ### **Example system_prompt format:**
+        - ✅ Correct:  
+          **"You are an AI Language Learning tutor assisting a user in understanding common responses to directions. The topic of this lesson is recognizing and interpreting directional responses. Teach the user to identify key phrases and react accordingly."**  
+        - ❌ Incorrect:  
+          **"Mukhtar, understanding responses is just as important as asking! I will teach you common responses locals might give when asked for directions."**
+
+        Provide the output as a **valid JSON list**.
         """
       )
     ],
