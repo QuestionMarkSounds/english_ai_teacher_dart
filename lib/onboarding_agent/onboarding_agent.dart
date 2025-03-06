@@ -21,6 +21,8 @@ class OnboardingAgent {
   final void Function(Map<String, dynamic> output) updateUserCallback;
   final void Function(Map<String, dynamic> output) generatePlanCallback;
   final void Function(String tool) toolUsageCallback;
+  final void Function(String? userID) commitPlanCallback;
+  final String? userID;
 
   // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
@@ -67,10 +69,13 @@ class OnboardingAgent {
   """;
 
   // Constructor
-  OnboardingAgent(
-      {required this.updateUserCallback,
-      required this.generatePlanCallback,
-      required this.toolUsageCallback}) {
+  OnboardingAgent({
+    required this.updateUserCallback,
+    required this.generatePlanCallback,
+    required this.toolUsageCallback,
+    required this.commitPlanCallback,
+    this.userID,
+  }) {
     promptTemplate = ChatPromptTemplate.fromTemplates([
       (ChatMessageType.system, onboardingAgentSystemPrompt),
       (ChatMessageType.messagesPlaceholder, 'message_history'),
@@ -81,6 +86,7 @@ class OnboardingAgent {
         tools: [
           UpdateUserData(updateUserCallback),
           GeneratePlan(generatePlanCallback),
+          CommitPlanToUserAccount(commitPlanCallback, userID)
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
             onboardingAgentSystemPrompt),
