@@ -80,6 +80,24 @@ class TalkyAssesmentResponse(BaseModel):
     response: str = Field("Response to the prompt")
     number: int
 
-ta = TypeAdapter(TalkyAssesmentResponse)
+
+class LessonSchema(BaseModel):
+    name: str = Field("Title of the lesson")
+    description: str = Field(
+        default="This lesson will help improve specific language skills through engaging exercises.", 
+        title="Description", 
+        description="Brief description of the lesson's benefits. Max 2 sentences."
+    )
+    duration: int = Field("Duration of the lesson in minutes. Max 15 minutes")
+    complexity: int = Field("Complexity level of the lesson. From 1 to 5, with 5 being the most complex")
+    system_prompt: str = Field("AI tutor instructions to facilitate the lesson")
+    
+
+
+class Lessons(BaseModel):
+    lessons: List[LessonSchema] = Field(title="Lessons", description="List of lesson objects")
+
+
+ta = TypeAdapter(Lessons)
 ta_schema = ta.json_schema()
 print(json.dumps(ta_schema, indent=2))
