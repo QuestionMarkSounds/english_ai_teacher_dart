@@ -23,6 +23,7 @@ class OnboardingAgent {
   final void Function(String tool) toolUsageCallback;
   final void Function(String? userID) commitPlanCallback;
   final String? userID;
+  bool planGenerated = false;
 
   // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
@@ -66,6 +67,9 @@ class OnboardingAgent {
       - Example: "i guess we can try that."  
 
     **User Information:** '{userInformation}'  
+
+    When commiting the plan to the user account, make sure that it has been generated.
+    Plan Was Generated: {planGenerated}
   """;
 
   // Constructor
@@ -85,7 +89,7 @@ class OnboardingAgent {
         llm: chatModel,
         tools: [
           UpdateUserData(updateUserCallback),
-          GeneratePlan(generatePlanCallback),
+          GeneratePlan(generatePlanCallback, () => planGenerated = true),
           CommitPlanToUserAccount(commitPlanCallback, userID)
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
@@ -130,7 +134,8 @@ class OnboardingAgent {
     Map<String, dynamic> formattedPrompt = {
       'input': input,
       'message_history': processMessageHistory(messageHistory),
-      'userInformation': userInformation
+      'userInformation': userInformation,
+      'planGenerated': planGenerated
     };
     String response = "";
 

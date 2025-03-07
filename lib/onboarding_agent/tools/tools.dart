@@ -29,7 +29,8 @@ final class CommitPlanToUserAccount extends StringTool {
 final class GeneratePlan
     extends Tool<Map<String, dynamic>, ToolOptions, String> {
   final void Function(Map<String, dynamic> output) callback;
-  GeneratePlan(this.callback)
+  final void Function() planGeneratedCallback;
+  GeneratePlan(this.callback, this.planGeneratedCallback)
       : super(
             name: 'generatePlan',
             description: """
@@ -57,6 +58,7 @@ final class GeneratePlan
       final String output =
           encoder.convert(toolInput); // Return the plan as output
       callback(toolInput);
+      planGeneratedCallback();
       return output;
     } catch (e) {
       return "I don't know how to generate a plan.";
