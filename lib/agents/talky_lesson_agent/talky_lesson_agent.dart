@@ -5,8 +5,8 @@ import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
 import 'package:retry/retry.dart';
 
-import '../src/globals.dart';
-import '../src/helper.dart';
+import '../../src/globals.dart';
+import '../../src/helper.dart';
 
 import 'tools.dart';
 
@@ -14,7 +14,8 @@ import 'tools.dart';
 // The main task of the talky
 // is to chat and provide immediate
 // feedback to the user, as well as
-// a final evaluation.
+// a final evaluation on whether the
+// user is ready for the next step.
 // ----------------------------
 
 // Constructing the agent class
@@ -170,8 +171,8 @@ class TalkyLessonAgent {
             await chain.invoke({"input": input, "messageHistory": messages});
 
         final pydanticResponse = res["output"][0].arguments;
-        bool mistakesPresent = pydanticResponse["mistakes_present"];
-        if (mistakesPresent) {
+        bool? mistakesPresent = pydanticResponse["mistakes_present"];
+        if (mistakesPresent != null && mistakesPresent) {
           output.add({"assistant": pydanticResponse["response"]});
         }
       },

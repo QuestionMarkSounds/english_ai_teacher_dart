@@ -1,16 +1,14 @@
 import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
 
-import '../src/agent_executor_with_next_step_callback.dart';
-import '../src/globals.dart';
-import '../src/helper.dart';
+import '../../src/agent_executor_with_next_step_callback.dart';
+import '../../src/globals.dart';
+import '../../src/helper.dart';
 
 // ----------------------------
-// The main task of the onboarder
-// is to confirm the users reason
-// for learning English, and generate
-// a personalized learning plan based
-// on that.
+// The main task of the general agent
+// is to chat with the user on any
+// topic and provide assistance.
 // ----------------------------
 
 // Constructing the agent class

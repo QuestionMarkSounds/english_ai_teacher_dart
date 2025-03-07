@@ -1,7 +1,7 @@
 import 'package:langchain/langchain.dart';
 import 'json_schemas.dart';
 
-import '../src/helper.dart';
+import '../../src/helper.dart';
 
 final class CompleteLesson
     extends Tool<Map<String, dynamic>, ToolOptions, String> {

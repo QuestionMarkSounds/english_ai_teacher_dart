@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
 
-import '../src/globals.dart';
+import '../../../src/globals.dart';
 import 'json_schemas.dart';
 
 Map<String, dynamic> exerciseTypes = {
