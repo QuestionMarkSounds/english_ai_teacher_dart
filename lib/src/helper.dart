@@ -23,10 +23,8 @@ int countHumanMessagesInHistory(List<Map<String, dynamic>> messageHistory) {
   for (Map<String, dynamic> message in messageHistory) {
     if (message.keys.first == 'user') {
       count++;
-      print(message.values.first);
     }
   }
-  print("COUNT: $count");
   return count;
 }
 
@@ -34,7 +32,7 @@ ChatMessage getLatestUserMessage(List<ChatMessage> messageHistory) {
   List<ChatMessage> messageHistoryReversed = messageHistory.reversed.toList();
   for (int i = 0; i < messageHistory.length; i++) {
     if (messageHistoryReversed[i] is HumanChatMessage) {
-      // messageHistory.removeAt(messageHistory.length - 1 - i);
+      messageHistory.removeAt(messageHistory.length - 1 - i);
       return messageHistoryReversed[i];
     }
   }
