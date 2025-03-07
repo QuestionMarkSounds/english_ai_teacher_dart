@@ -1,9 +1,14 @@
+import 'dart:math';
+
+import 'package:english_ai_teacher/src/agent_executor_with_next_step_callback.dart';
 import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
 import 'package:retry/retry.dart';
 
 import '../src/globals.dart';
 import '../src/helper.dart';
+
+import 'tools.dart';
 
 // ----------------------------
 // The main task of the talky
@@ -16,31 +21,77 @@ import '../src/helper.dart';
 class TalkyLessonAgent {
   final String proficiencyLevel;
   final String lessonSystemPrompt;
+  final int maxIterations;
+  late BaseChain executor;
+  final void Function(Map<String, dynamic>) lessonCompleteCallback;
 
   List<ChatMessage> assessmentMessages = [];
 
   // Constructor
-  TalkyLessonAgent(
-      {required this.proficiencyLevel, required this.lessonSystemPrompt});
+  TalkyLessonAgent({
+    required this.proficiencyLevel,
+    required this.lessonSystemPrompt,
+    required this.lessonCompleteCallback,
+    this.maxIterations = 3,
+  }) {
+    final systemPrompt = '''
+          You are an English language teacher that is practicing a conversation with the user.
+          You are required to collect at least $maxIterations responses from the user. The number of user responses will be included below.
+
+          Once there is a sufficient number of user responses, you might continue the lesson only if the latest user message implies that the user seeks for information.
+          
+          You must NOT end the lesson if number of user responses is $maxIterations or above **AND** the user seeks for information either by asking a question or by expressing confusion in his latest message.
+          For example, if user does not understand something, seeks clarification, or asks a question in his latest message, you must continue the lesson for .
+          Otherwise, You must end the lesson if number of user responses is $maxIterations or above **AND** the conversation is going nowhere.
+          In any other case, use CompleteLesson tool to compose a summary of the lesson and to end the lesson.
+
+          Follow up on a conversation based on chat history. 
+          Description of the lesson: $lessonSystemPrompt. 
+
+          Keep in mind user's proficiency level: $proficiencyLevel. 
+
+          Number of user responses {number_of_responses}
+
+          ''';
+
+    final agent = ToolsAgent.fromLLMAndTools(
+        llm: chatModel,
+        tools: [
+          CompleteLesson(
+            callback: lessonCompleteCallback,
+          )
+        ],
+        systemChatMessage:
+            SystemChatMessagePromptTemplate.fromTemplate(systemPrompt),
+        extraPromptMessages: [
+          ChatMessagePromptTemplate.messagesPlaceholder('message_history'),
+        ]);
+
+    executor = AgentExecutorWithNextStepCallback(
+      agent: agent,
+      toolUsageCallback: (String a) {
+        print(a);
+      },
+    );
+  }
 
   // Ask Question method. Used to ask the user a question
   Future<Map<String, dynamic>> askQuestion(
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
-    final systemPrompt = ChatMessage.system('''
-      Follow up on a conversation based on chat history. 
-      $lessonSystemPrompt. 
-
-      Keep in mind user's proficiency level: $proficiencyLevel 
-
-      ''');
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
-    final prompt = PromptValue.chat([systemPrompt] + messages);
+    int responseCount = countHumanMessagesInHistory(messageHistory);
+    final latestUserMessage = getLatestUserMessage(messages);
+
     String response = '';
     await retry(
       () async {
-        final res = await chatModel.invoke(prompt);
-        response = res.outputAsString;
+        final res = await executor.invoke({
+          'message_history': messages,
+          'number_of_responses': responseCount,
+          'input': latestUserMessage.contentAsString,
+        });
+        response = res["output"];
       },
       retryIf: (e) => true,
       delayFactor: const Duration(milliseconds: 300),
@@ -111,7 +162,7 @@ class TalkyLessonAgent {
       outputParser: ToolsOutputParser(),
     );
     List<Map<String, dynamic>> output = [
-      {"user": input},
+      // {"user": input},
     ];
     await retry(
       () async {
@@ -130,34 +181,5 @@ class TalkyLessonAgent {
     );
     assessmentMessages.add(ChatMessage.ai(response));
     return output;
-  }
-
-  // Complete Lesson method. Used to complete the lesson with a summary
-  Future<Map<String, dynamic>> completeLesson(
-      List<Map<String, dynamic>> messageHistory,
-      Map<String, dynamic>? userInfo) async {
-    final systemPrompt = ChatMessage.system('''
-      Compose a short summary of the messages from the history that imply any remarks on English language usage. 
-      Focus on English language usage and keep in mind user's proficiency level: $proficiencyLevel.
-      Disregard AI messages that have questions. 
-      Don't focus on the latest user message. Process all the messages from the history.
-      Congratulate user on lesson completion.
-
-      ''');
-    String response = '';
-    final List<ChatMessage> messages = processMessageHistory(messageHistory);
-    final prompt = PromptValue.chat([systemPrompt] + messages);
-
-    await retry(
-      () async {
-        final res = await chatModel.invoke(prompt);
-        response = res.outputAsString;
-      },
-      retryIf: (e) => true,
-      delayFactor: const Duration(milliseconds: 300),
-      maxAttempts: 3,
-    );
-
-    return {"assistant": response};
   }
 }

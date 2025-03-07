@@ -24,22 +24,30 @@ void main() async {
   // ----------------------------
   // Agent initialization section
   // ----------------------------
+  bool lessonComplete = false;
+
   String lessonSystemPrompt =
       "Create open-ended questions about the importance of knowing how to find places in a foreign country. Ask Mukhtar what he thinks are the most essential places to locate while traveling.";
   TalkyLessonAgent agent = TalkyLessonAgent(
       proficiencyLevel: userInfo["current level of english"],
-      lessonSystemPrompt: lessonSystemPrompt);
+      lessonSystemPrompt: lessonSystemPrompt,
+      maxIterations: maxRounds,
+      lessonCompleteCallback: (Map<String, dynamic> response) {
+        lessonComplete = true;
+        print("Lesson complete:\n\n ${response}");
+      });
 
   // --------------------------------
   // Example of using the talky agent
   // --------------------------------
-  int round = 0;
-  while (round < maxRounds) {
+  while (!lessonComplete) {
     // The flow starts with the agent asking a question
     Map<String, dynamic> response =
         await agent.askQuestion(messageHistory, userInfo);
     askQuestion(response);
     messageHistory.add(response);
+
+    if (lessonComplete) break;
 
     // The user responds
     stdout.write('You: ');
@@ -50,23 +58,13 @@ void main() async {
       break;
     }
 
-    messageHistory.add({"user": userInput});
-
     // The agent responds with an improvement suggestion
     List<Map<String, dynamic>> replyResponse =
         await agent.replyWithImprovement(userInput, messageHistory, userInfo);
     replyWithImprovement(replyResponse);
+    messageHistory.add({"user": userInput});
     messageHistory.addAll(replyResponse);
-
-    // Next round
-    round++;
   }
-
-  // The agent completes the lesson after the last round
-  Map<String, dynamic> response =
-      await agent.completeLesson(messageHistory, userInfo);
-  completeLesson(response);
-  messageHistory.add(response);
 }
 
 // --------------------------
@@ -85,9 +83,4 @@ replyWithImprovement(response) {
       print('\nAI Reply: ${message.values.first}');
     }
   }
-}
-
-completeLesson(response) {
-  // Redefine the logic to commit to firebase chat history.
-  print('\nAI Completion: ${response["assistant"]}');
 }
