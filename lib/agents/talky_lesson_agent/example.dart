@@ -8,14 +8,14 @@ void main() async {
   // ------------------------
 
   // How many rounds to play
-  int maxRounds = 3;
+  int maxRounds = 7;
 
   // User info
   Map<String, dynamic> userInfo = {
     "name": "Mukhtar",
-    "native language": "Armenian",
+    "native language": "Russian",
     "interests": "Watching TV, Politics",
-    "current level of english": "A2",
+    "current level of english": "A1",
   };
 
   // Chat history
@@ -27,11 +27,14 @@ void main() async {
   bool lessonComplete = false;
 
   String lessonSystemPrompt =
-      "Create open-ended questions about the importance of knowing how to find places in a foreign country. Ask Mukhtar what he thinks are the most essential places to locate while traveling.";
+      "Teach Mukhtar some basic vocabulary for travelling in a foreign country. Keep in mind that Mukhtar language only starts learning the languag, so try to talk to him in both lesson language and his native language.";
   TalkyLessonAgent agent = TalkyLessonAgent(
       proficiencyLevel: userInfo["current level of english"],
       lessonSystemPrompt: lessonSystemPrompt,
       maxIterations: maxRounds,
+      language: "French",
+      nativeLanguage: userInfo["native language"],
+      teachInNativeLanguage: true,
       lessonCompleteCallback: (Map<String, dynamic> response) {
         lessonComplete = true;
         print("Lesson complete:\n\n ${response}");

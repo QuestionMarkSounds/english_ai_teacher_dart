@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:english_ai_teacher/agents/talky_lesson_agent/json_schemas.dart';
 import 'package:english_ai_teacher/src/agent_executor_with_next_step_callback.dart';
 import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
@@ -23,6 +24,9 @@ class TalkyLessonAgent {
   final String proficiencyLevel;
   final String lessonSystemPrompt;
   final int maxIterations;
+  final String language;
+  final String nativeLanguage;
+  final bool teachInNativeLanguage;
   late BaseChain executor;
   final void Function(Map<String, dynamic>) lessonCompleteCallback;
 
@@ -33,25 +37,43 @@ class TalkyLessonAgent {
     required this.proficiencyLevel,
     required this.lessonSystemPrompt,
     required this.lessonCompleteCallback,
+    required this.nativeLanguage,
     this.maxIterations = 3,
+    this.language = "English",
+    this.teachInNativeLanguage = false,
   }) {
     final systemPrompt = '''
-          You are an English language teacher that is practicing a conversation with the user.
+          You are an $language language teacher that is practicing a conversation with the user.
           You are required to collect at least $maxIterations responses from the user. The number of user responses will be included below.
 
-          Once there is a sufficient number of user responses, you might continue the lesson only if the latest user message implies that the user seeks for information.
-          
-          You must NOT end the lesson if number of user responses is $maxIterations or above **AND** the user seeks for information either by asking a question or by expressing confusion in his latest message.
-          For example, if user does not understand something, seeks clarification, or asks a question in his latest message, you must continue the lesson for .
-          Otherwise, You must end the lesson if number of user responses is $maxIterations or above **AND** the conversation is going nowhere.
-          In any other case, use CompleteLesson tool to compose a summary of the lesson and to end the lesson.
+          ${teachInNativeLanguage ? "Teach the user in $nativeLanguage" : ""}
 
           Follow up on a conversation based on chat history. 
           Description of the lesson: $lessonSystemPrompt. 
 
-          Keep in mind user's proficiency level: $proficiencyLevel. 
+          If the user expresses difficulty understanding a word or sentence, the agent should provide explanations in both the lesson language (represented by $language) and the user’s native language ($nativeLanguage).
+
+          Once there is a sufficient number of user responses, you might continue the lesson only if the latest user message implies that the user seeks for information.
+          
+          Rules for ending the lesson:
+
+          1. **DO NOT** end the lesson if the user seeks for information either by asking a question or by expressing confusion in his latest message.
+          For example, if user does not understand something, seeks clarification, or asks a question in his latest message, you must continue the lesson.
+
+          2. If the user does not follow the conversation, could not properly express himself **AND** the number of user responses is $maxIterations or above, 
+          you must end the lesson. 
+          
+          3. In all other cases, You must end the lesson if number of user responses is $maxIterations or above.
+
+
+          
+          After completing the lesson content, provide your final answer exclusively using the completeLesson tool that has the following JSON schema: ${completeLessonToolSchema.toString().replaceAll(RegExp(r'[{}]'), "")}.
+
+          Keep in mind user's proficiency level: $proficiencyLevel. You **MUST** use language appropriate to the user's proficiency level.
 
           Number of user responses {number_of_responses}
+
+          Always explain why you did not end the lesson in the response if number of responses is above $maxIterations.
 
           ''';
 
@@ -60,6 +82,7 @@ class TalkyLessonAgent {
         tools: [
           CompleteLesson(
             callback: lessonCompleteCallback,
+            trackVocabulary: teachInNativeLanguage,
           )
         ],
         systemChatMessage:
@@ -83,7 +106,7 @@ class TalkyLessonAgent {
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     int responseCount = countHumanMessagesInHistory(messageHistory);
     final latestUserMessage = getLatestUserMessage(messages);
-
+    print("Response Count: $responseCount");
     String response = '';
     await retry(
       () async {
@@ -114,16 +137,17 @@ class TalkyLessonAgent {
       (
         ChatMessageType.system,
         '''
-      You are an English language teacher. Analyse the latest user message.
-      Respond with a short assessment of English language proficiency and 
+      You are an $language language teacher. Analyse the latest user message.
+      Respond with a short assessment of $language language proficiency and 
       improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.
 
       Keep in mind user's proficiency level: $proficiencyLevel.
       Do not include or reiterate the user's message in the response!
-      In case if there are no issues with the user's English considering the user's proficiency level, respond with an empty response.
+      In case if there are no issues with the user's $language considering the user's proficiency level, respond with an empty response.
 
       Things that don't count as a mistake:
-      - the message is clear but could be simplified. Does not count as a mistake for english levels A1, A2 and B1.
+      - the message is clear but could be simplified. Does not count as a mistake for $language levels A1, A2 and B1.
+      - the user asks for clarification of the meaning of the word or the sentence.
       '''
       ),
       (ChatMessageType.human, 'input'),
@@ -140,18 +164,19 @@ class TalkyLessonAgent {
         inputJsonSchema: {
           "properties": {
             "mistakes_present": {
-              "default": "True if mistakes are present, False if not",
+              "default":
+                  "True if mistakes are present, False if not. False if the user asks for clarification of the meaning of the word or the sentence. ",
               "title": "Mistakes Present",
               "type": "boolean"
             },
             "response": {
               "default":
-                  """Respond with a short assessment of English language proficiency and 
+                  """Respond with a short assessment of $language language proficiency and 
       improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.
 
       Keep in mind user's proficiency level: $proficiencyLevel
       Do not include the user's message in the response!
-      In case if there are no issues with the user's English considering the user's proficiency level, respond with an empty response.""",
+      In case if there are no issues with the user's $language considering the user's proficiency level, respond with an empty response.""",
               "title": "Response",
               "type": "string"
             }

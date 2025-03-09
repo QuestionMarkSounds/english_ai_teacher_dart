@@ -21,3 +21,33 @@ Map<String, dynamic> completeLessonToolSchema = {
   "title": "CompleteLessonResponse",
   "type": "object"
 };
+
+Map<String, dynamic> completeLessonToolVocabularySchema = {
+  "properties": {
+    "success": {
+      "default":
+          "Student has completed the lesson successfully. Unsuccessful if user did not follow the conversation, could not properly express himself",
+      "title": "Success",
+      "type": "boolean"
+    },
+    "remarks": {
+      "default": "Remarks in a form of bullet points",
+      "items": {"type": "string"},
+      "title": "Remarks",
+      "type": "array"
+    },
+    "vocabulary_learned": {
+      "default": "Vocablulary that the user has learned in the lesson.",
+      "items": {"type": "string"},
+      "title": "vocabulary_learned",
+      "type": "array"
+    },
+    "feedback": {
+      "default": "Short feedback on the lesson",
+      "title": "Feedback",
+      "type": "string"
+    }
+  },
+  "title": "CompleteLessonResponse",
+  "type": "object"
+};

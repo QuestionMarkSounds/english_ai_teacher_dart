@@ -6,13 +6,16 @@ import '../../src/helper.dart';
 final class CompleteLesson
     extends Tool<Map<String, dynamic>, ToolOptions, String> {
   final void Function(Map<String, dynamic> output) callback;
-  CompleteLesson({required this.callback})
+  final bool trackVocabulary;
+  CompleteLesson({required this.callback, this.trackVocabulary = false})
       : super(
           name: 'completeLesson',
           description: """
               Use compose a summary upon the lesson completion.
               """,
-          inputJsonSchema: completeLessonToolSchema,
+          inputJsonSchema: trackVocabulary
+              ? completeLessonToolVocabularySchema
+              : completeLessonToolSchema,
           returnDirect: true,
         );
   @override
