@@ -13,10 +13,7 @@ Future<String> aiExampleResponse(
       (
         ChatMessageType.system,
         """
-        Your role is user.
-        Create an response to the following conversation using the $langOut language and the $proficiencyLevel proficiency level:
-
-
+        Create a response to the following conversation using the $langOut language and the $proficiencyLevel proficiency level:
         """
       ),
       (ChatMessageType.messagesPlaceholder, 'messageHistory'),
