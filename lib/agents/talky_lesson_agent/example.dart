@@ -40,12 +40,13 @@ void main() async {
   // --------------------------------
   // Example of using the talky agent
   // --------------------------------
+
+  String response = await agent.greet(messageHistory, userInfo.toString());
+  askQuestion(response);
+  messageHistory.add({"assistant": response});
+
   while (!lessonComplete) {
     // The flow starts with the agent asking a question
-    Map<String, dynamic> response =
-        await agent.askQuestion(messageHistory, userInfo);
-    askQuestion(response);
-    messageHistory.add(response);
 
     if (lessonComplete) break;
 
@@ -59,11 +60,11 @@ void main() async {
     }
 
     // The agent responds with an improvement suggestion
-    List<Map<String, dynamic>> replyResponse =
-        await agent.replyWithImprovement(userInput, messageHistory, userInfo);
+    String replyResponse =
+        await agent.stream(userInput, messageHistory, userInfo.toString());
     replyWithImprovement(replyResponse);
     messageHistory.add({"user": userInput});
-    messageHistory.addAll(replyResponse);
+    messageHistory.add({"assistant": replyResponse});
   }
 }
 
@@ -73,14 +74,10 @@ void main() async {
 
 askQuestion(response) {
   // Redefine the logic to commit to firebase user info.
-  print("\nAI Question: ${response['assistant']}");
+  print("\nAI Question: ${response}");
 }
 
 replyWithImprovement(response) {
   // Redefine the logic to adjust frontend to show spinner, and commit plan to firebase.
-  for (var message in response) {
-    if (message.keys.first == 'assistant') {
-      print('\nAI Reply: ${message.values.first}');
-    }
-  }
+  print('\nAI Reply: ${response}');
 }
