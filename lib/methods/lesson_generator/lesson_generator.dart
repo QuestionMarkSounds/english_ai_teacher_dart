@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:langchain/langchain.dart';
 import 'package:langchain_openai/langchain_openai.dart';
 
-import '../src/globals.dart';
+import '../../src/globals.dart';
 import 'json_schemas.dart';
 
 Map<String, dynamic> exerciseTypes = {
@@ -29,13 +29,8 @@ Future<List<dynamic>> generateLessons({
       (
         ChatMessageType.system,
         """
+        You are an English language teacher.
         Generate a structured list of $numberOfLessons lessons for the subgoal "$subgoalName" under the goal "$goalName" in the "$planName" plan. 
-
-        Each lesson should be represented as a JSON object with the following structure:
-
-          "name": "<Lesson Title>",
-          "system_prompt": "<AI tutor instructions to facilitate the lesson>",
-          "duration": <Lesson Duration in minutes>
 
         ### Requirements:
         - Ensure each lesson progressively helps the user achieve the subgoal "$subgoalName".
@@ -44,6 +39,16 @@ Future<List<dynamic>> generateLessons({
         - The **system_prompt must be written in third-person, addressing the AI tutor** (e.g., "You are an AI Language Learning tutor...").
         - **Do not** address the user directly. Instead, structure prompts as instructions for an AI tutor.
         - Use the user's details for personalization: ${userInfo.toString().replaceAll("{", "").replaceAll("}", "")}.
+
+        ### **Example description format:**
+        - ✅ Correct:  
+          **"This lesson will help improve specific language skills through engaging exercises."**  
+        - ✅ Correct:
+          **"Engage in simulated conversations where you ask for directions and receives responses."**
+        - ❌ Incorrect:
+          **"Do activities where Mukhtar completes dialogues related to asking for directions."**
+        - ❌ Incorrect:
+          **"Teach Mukhtar how to read a simple map and use it to ask for directions."**
 
         ### **Example system_prompt format:**
         - ✅ Correct:  

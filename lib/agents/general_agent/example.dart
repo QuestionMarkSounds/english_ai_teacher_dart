@@ -1,4 +1,4 @@
-import 'onboarding_agent.dart';
+import 'general_agent.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,8 +8,8 @@ import 'dart:io';
 
 JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
-initJsons(userId, userInfo, memoryJson, userInfoJson, learningPlanJson,
-    memoryFile, userInfoFile, learningPlanFile) {
+initJsons(
+    userId, userInfo, memoryJson, userInfoJson, memoryFile, userInfoFile) {
   if (!memoryFile.existsSync()) {
     memoryFile.writeAsStringSync(json.encode({}));
   }
@@ -17,30 +17,21 @@ initJsons(userId, userInfo, memoryJson, userInfoJson, learningPlanJson,
   if (!userInfoFile.existsSync()) {
     userInfoFile.writeAsStringSync(json.encode({}));
   }
-
-  if (!learningPlanFile.existsSync()) {
-    learningPlanFile.writeAsStringSync(json.encode({}));
-  }
-
   memoryJson = json.decode(memoryFile.readAsStringSync());
   userInfoJson = json.decode(userInfoFile.readAsStringSync());
-  learningPlanJson = json.decode(learningPlanFile.readAsStringSync());
 
   userInfoJson[userId] = userInfo;
-  learningPlanJson[userId] = {};
   memoryJson[userId] = [];
 
   memoryFile
       .writeAsStringSync(JsonEncoder.withIndent('  ').convert(memoryJson));
   userInfoFile
       .writeAsStringSync(JsonEncoder.withIndent('  ').convert(userInfoJson));
-  learningPlanFile.writeAsStringSync(
-      JsonEncoder.withIndent('  ').convert(learningPlanJson));
 
-  return (memoryJson, userInfoJson, learningPlanJson);
+  return (memoryJson, userInfoJson);
 }
 
-// Example of using the onboarding agent with predefined inputs.
+// Example of using the general agent with predefined inputs
 void main() async {
   // ------------------------
   // Predefined input section
@@ -61,40 +52,22 @@ void main() async {
   // -------------------------------------------------------------
   Map<String, dynamic> memoryJson = {};
   Map<String, dynamic> userInfoJson = {};
-  Map<String, dynamic> learningPlanJson = {};
 
-  File memoryFile = File('lib/onboarding_agent/jsons/memory.json');
-  File userInfoFile = File('lib/onboarding_agent/jsons/user_info.json');
-  File learningPlanFile = File('lib/onboarding_agent/jsons/learning_plan.json');
+  File memoryFile = File('lib/agents/general_agent/jsons/memory.json');
+  File userInfoFile = File('lib/agents/general_agent/jsons/user_info.json');
 
-  (memoryJson, userInfoJson, learningPlanJson) = initJsons(
-      userId,
-      userInfo,
-      memoryJson,
-      userInfoJson,
-      learningPlanJson,
-      memoryFile,
-      userInfoFile,
-      learningPlanFile);
+  (memoryJson, userInfoJson) = initJsons(
+      userId, userInfo, memoryJson, userInfoJson, memoryFile, userInfoFile);
 
   // ----------------------------
   // Agent initialization section
   // ----------------------------
 
-  // Initialization of the onboarding agent.
-  OnboardingAgent onboardingAgent = OnboardingAgent(
-      updateUserCallback: (Map<String, dynamic> output) {
-        updateUser(userInfoJson, userInfoFile, userId, output);
-      },
-      generatePlanCallback: (Map<String, dynamic> output) {
-        savePlan(learningPlanJson, learningPlanFile, userId, output);
-      },
-      toolUsageCallback: (tool) => print("\n\nABOUT TO USE TOOL: $tool"),
-      commitPlanCallback: (userID) =>
-          print("\n\nCOMMIT PLAN TO USER: ${userID ?? "<Anonymous>"}"));
+  // Initialization of the general agent
+  GeneralAgent generalAgent = GeneralAgent();
 
   // -------------------------------------
-  // Example of using the onboarding agent
+  // Example of using the general agent
   // -------------------------------------
 
   List<Map<String, dynamic>> messageHistory =
@@ -102,7 +75,8 @@ void main() async {
           .map((e) => e as Map<String, dynamic>)
           .toList();
 
-  String response = await onboardingAgent.greet(messageHistory, userInfo.toString());
+  String response =
+      await generalAgent.greet(messageHistory, userInfo.toString());
   replyToUser(memoryJson, memoryFile, userId, response);
 
   while (true) {
@@ -123,7 +97,7 @@ void main() async {
             .toList();
 
     // AI response
-    String response = await onboardingAgent.stream(
+    String response = await generalAgent.stream(
         userPrompt, messageHistory, userInfo.toString());
     replyToUser(memoryJson, memoryFile, userId, response);
   }
@@ -133,22 +107,8 @@ void main() async {
 // Callback functions section
 // --------------------------
 
-updateUser(userInfoJson, userInfoFile, userId, userInfo) {
-  // Redefine the logic to commit to firebase user info.
-  userInfoJson[userId] = userInfo;
-  userInfoFile
-      .writeAsStringSync(JsonEncoder.withIndent('  ').convert(userInfoJson));
-}
-
-savePlan(learningPlanJson, learningPlanFile, userId, plan) {
-  // Redefine the logic to commit to firebase learning plan.
-  learningPlanJson[userId] = plan;
-  learningPlanFile.writeAsStringSync(
-      JsonEncoder.withIndent('  ').convert(learningPlanJson));
-}
-
 replyToUser(memoryJson, memoryFile, userId, response) {
-  // Redefine the logic to commit to firebase chat history.
+  // Redefine the logic to commit to firebase chat history
   print("AI: $response");
   memoryJson[userId].add({"assistant": response});
   memoryFile
@@ -156,7 +116,7 @@ replyToUser(memoryJson, memoryFile, userId, response) {
 }
 
 saveUserInput(memoryJson, memoryFile, userId, userPrompt) {
-  // Redefine the logic to commit to firebase chat history.
+  // Redefine the logic to commit to firebase chat history
   memoryJson[userId].add({"user": userPrompt});
   memoryFile
       .writeAsStringSync(JsonEncoder.withIndent('  ').convert(memoryJson));

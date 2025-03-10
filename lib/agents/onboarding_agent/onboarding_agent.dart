@@ -2,9 +2,9 @@ import 'package:langchain/langchain.dart';
 import 'package:retry/retry.dart';
 import 'tools/tools.dart';
 
-import '../src/agent_executor_with_next_step_callback.dart';
-import '../src/globals.dart';
-import '../src/helper.dart';
+import '../../src/agent_executor_with_next_step_callback.dart';
+import '../../src/globals.dart';
+import '../../src/helper.dart';
 
 // ----------------------------
 // The main task of the onboarder
@@ -23,12 +23,14 @@ class OnboardingAgent {
   final void Function(String tool) toolUsageCallback;
   final void Function(String? userID) commitPlanCallback;
   final String? userID;
+  bool planGenerated = false;
 
   // Defining the system prompt
   final String onboardingAgentSystemPrompt = """
     You are an onboarding assistant for an English-learning app.
     The user’s name, native language, and interests are provided.
     Your primary goal is to understand why the user wants to learn English through a step-by-step approach.
+    Talk to the user in English.
 
     When using tools, use only one tool at a time.
 
@@ -66,6 +68,9 @@ class OnboardingAgent {
       - Example: "i guess we can try that."  
 
     **User Information:** '{userInformation}'  
+
+    When commiting the plan to the user account, make sure that it has been generated.
+    Plan Was Generated: {planGenerated}
   """;
 
   // Constructor
@@ -85,7 +90,8 @@ class OnboardingAgent {
         llm: chatModel,
         tools: [
           UpdateUserData(updateUserCallback),
-          GeneratePlan(generatePlanCallback),
+          GeneratePlanSmartLlm(
+              generatePlanCallback, smartChatModel, () => planGenerated = true),
           CommitPlanToUserAccount(commitPlanCallback, userID)
         ],
         systemChatMessage: SystemChatMessagePromptTemplate.fromTemplate(
@@ -105,7 +111,8 @@ class OnboardingAgent {
       List<Map<String, dynamic>> messageHistory, String userInformation) async {
     String response = "";
     final prompt = PromptValue.chat([
-      ChatMessage.system("Information about the user: $userInformation"),
+      ChatMessage.system(
+          "Talk to the user in English. Information about the user: $userInformation"),
       ChatMessage.humanText(
           "Start the conversation by greeting me and asking me why I want to learn english without acknowledging that I asked you to.")
     ]);
@@ -130,7 +137,8 @@ class OnboardingAgent {
     Map<String, dynamic> formattedPrompt = {
       'input': input,
       'message_history': processMessageHistory(messageHistory),
-      'userInformation': userInformation
+      'userInformation': userInformation,
+      'planGenerated': planGenerated
     };
     String response = "";
 
