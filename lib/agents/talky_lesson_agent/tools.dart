@@ -13,8 +13,9 @@ final class CompleteLesson
               Use compose a summary upon the lesson completion.
               """,
           inputJsonSchema: completeLessonToolSchema,
-          returnDirect: true,
+          returnDirect: false,
         );
+
   @override
   Future<String> invokeInternal(
     final Map<String, dynamic> toolInput, {
@@ -24,7 +25,7 @@ final class CompleteLesson
       final String output =
           encoder.convert(toolInput); // Return the plan as output
       callback(toolInput);
-      return output;
+      return "Lesson completed!";
     } catch (e) {
       return "I don't know how to generate a plan.";
     }
