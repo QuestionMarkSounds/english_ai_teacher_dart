@@ -18,6 +18,22 @@ List<ChatMessage> processMessageHistory(
   return messages;
 }
 
+List<ChatMessage> processMessageHistorySwappedRoles(
+    List<Map<String, dynamic>> messageHistory) {
+  List<ChatMessage> messages = [];
+  for (Map<String, dynamic> message in messageHistory) {
+    switch (message.keys.first) {
+      case 'user':
+        messages.add(ChatMessage.ai(message.values.first));
+        break;
+      case 'assistant':
+        messages.add(ChatMessage.humanText(message.values.first));
+        break;
+    }
+  }
+  return messages;
+}
+
 int countHumanMessagesInHistory(List<Map<String, dynamic>> messageHistory) {
   int count = 0;
   for (Map<String, dynamic> message in messageHistory) {

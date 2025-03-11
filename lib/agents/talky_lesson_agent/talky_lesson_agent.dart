@@ -183,4 +183,32 @@ class TalkyLessonAgent {
     assessmentMessages.add(ChatMessage.ai(response));
     return output;
   }
+
+  Future<String> greet(
+      List<Map<String, dynamic>> messageHistory, String userInformation) async {
+    final response = await askQuestion(messageHistory, null);
+    return response["assistant"];
+  }
+
+  Future<String> stream(String input, List<Map<String, dynamic>> messageHistory,
+      String userInformation) async {
+    String output = "";
+    List<Map<String, dynamic>> replyWithImprovements =
+        await replyWithImprovement(input, messageHistory, null);
+
+    if (replyWithImprovements.isNotEmpty) {
+      output = replyWithImprovements[0]["assistant"] + "\n\n";
+    }
+
+    final askQuestionReply = await askQuestion(
+        messageHistory +
+            [
+              {"user": input}
+            ],
+        null);
+
+    output += askQuestionReply["assistant"];
+
+    return output;
+  }
 }
