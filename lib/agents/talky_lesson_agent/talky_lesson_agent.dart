@@ -23,6 +23,7 @@ class TalkyLessonAgent {
   final String proficiencyLevel;
   final String lessonSystemPrompt;
   final int maxIterations;
+  late String systemPrompt;
   late BaseChain executor;
   final void Function(Map<String, dynamic>) lessonCompleteCallback;
 
@@ -35,15 +36,15 @@ class TalkyLessonAgent {
     required this.lessonCompleteCallback,
     this.maxIterations = 3,
   }) {
-    final systemPrompt = '''
+    systemPrompt = '''
           You are an English language teacher that is practicing a conversation with the user.
           You are required to collect at least $maxIterations responses from the user. The number of user responses will be included below.
 
-          Once there is a sufficient number of user responses, you might continue the lesson only if the latest user message implies that the user seeks for information.
+          Once there is a sufficient number of user responses, you should  use CompleteLesson tool to compose a summary of the lesson and to end the lesson.
           
-          You must NOT end the lesson if number of user responses is $maxIterations or above **AND** the user seeks for information either by asking a question or by expressing confusion in his latest message.
-          For example, if user does not understand something, seeks clarification, or asks a question in his latest message, you must continue the lesson for .
-          Otherwise, You must end the lesson if number of user responses is $maxIterations or above **AND** the conversation is going nowhere.
+          You must NOT use CompleteLesson tool to end the lesson if number of user responses is $maxIterations or above **AND** the user seeks for information either by asking a question or by expressing confusion in his latest message.
+          For example, if user does not understand something, seeks clarification, or asks a question in his latest message, you must continue the lesson.
+          Otherwise, You must use CompleteLesson tool to compose a summary of the lesson and to end the lesson if number of user responses is $maxIterations or above **AND** the conversation is going nowhere.
           In any other case, use CompleteLesson tool to compose a summary of the lesson and to end the lesson.
 
           Follow up on a conversation based on chat history. 
@@ -84,12 +85,13 @@ class TalkyLessonAgent {
     final latestUserMessage = getLatestUserMessage(messages);
 
     String response = '';
+    print("Response count: $responseCount");
     await retry(
       () async {
         final res = await executor.invoke({
           'message_history': messages,
           'number_of_responses': responseCount,
-          'input': latestUserMessage.contentAsString,
+          'input': latestUserMessage != null ? latestUserMessage.contentAsString : '',
         });
         response = res["output"];
       },
@@ -183,7 +185,19 @@ class TalkyLessonAgent {
 
   Future<String> greet(
       List<Map<String, dynamic>> messageHistory, String userInformation) async {
-    final response = await askQuestion(messageHistory, null);
+    String response = '';
+    await retry(
+      () async {
+        final res = await chatModel.invoke(PromptValue.chat([
+          ChatMessage.system(systemPrompt + "\n\n" + "The user did not send any messages yet. Start the lesson with your first message."),
+        ]));
+        response = res.outputAsString;
+      },
+      retryIf: (e) => true,
+      delayFactor: const Duration(milliseconds: 300),
+      maxAttempts: 3,
+    );
+
     return response;
   }
 
