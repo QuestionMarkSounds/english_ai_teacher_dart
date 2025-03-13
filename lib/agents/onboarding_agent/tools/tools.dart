@@ -68,6 +68,9 @@ final class GeneratePlanSmartLlm extends StringTool {
             Each subgoal should take approximately 1 week to complete.
 
             Ensure the plan is **practical, engaging, and adaptable** to different learning paces. 
+
+            Include a Plan description which should be in a form of a compound imperative sentence listing at least three benefits of the course.
+            **Plan description example**: Master essential skills to excel in job interviews, navigate your first days at work, and accelerate your professional growth.
             """
         ),
       ],

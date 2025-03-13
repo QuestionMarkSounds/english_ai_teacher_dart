@@ -77,8 +77,7 @@ class TalkyLessonAgent {
   }
 
   // Ask Question method. Used to ask the user a question
-  Future<Map<String, dynamic>> askQuestion(
-      List<Map<String, dynamic>> messageHistory,
+  Future<String> askQuestion(List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     int responseCount = countHumanMessagesInHistory(messageHistory);
@@ -99,11 +98,11 @@ class TalkyLessonAgent {
       maxAttempts: 3,
     );
     messages.add(ChatMessage.ai(response));
-    return {"assistant": response};
+    return response;
   }
 
   // Reply with Improvement method. Used to give user improvement suggestions
-  Future<List<Map<String, dynamic>>> replyWithImprovement(
+  Future<String?> replyWithImprovement(
       String input,
       List<Map<String, dynamic>> messageHistory,
       Map<String, dynamic>? userInfo) async {
@@ -162,9 +161,7 @@ class TalkyLessonAgent {
       ),
       outputParser: ToolsOutputParser(),
     );
-    List<Map<String, dynamic>> output = [
-      // {"user": input},
-    ];
+    String? output;
     await retry(
       () async {
         final res =
@@ -173,7 +170,7 @@ class TalkyLessonAgent {
         final pydanticResponse = res["output"][0].arguments;
         bool? mistakesPresent = pydanticResponse["mistakes_present"];
         if (mistakesPresent != null && mistakesPresent) {
-          output.add({"assistant": pydanticResponse["response"]});
+          output = pydanticResponse["response"];
         }
       },
       retryIf: (e) => true,
@@ -187,27 +184,24 @@ class TalkyLessonAgent {
   Future<String> greet(
       List<Map<String, dynamic>> messageHistory, String userInformation) async {
     final response = await askQuestion(messageHistory, null);
-    return response["assistant"];
+    return response;
   }
 
   Future<String> stream(String input, List<Map<String, dynamic>> messageHistory,
       String userInformation) async {
-    String output = "";
-    List<Map<String, dynamic>> replyWithImprovements =
-        await replyWithImprovement(input, messageHistory, null);
+    final llmReplies = await Future.wait([
+      replyWithImprovement(input, messageHistory, null),
+      askQuestion(
+          messageHistory +
+              [
+                {"user": input}
+              ],
+          null)
+    ]);
 
-    if (replyWithImprovements.isNotEmpty) {
-      output = replyWithImprovements[0]["assistant"] + "\n\n";
-    }
-
-    final askQuestionReply = await askQuestion(
-        messageHistory +
-            [
-              {"user": input}
-            ],
-        null);
-
-    output += askQuestionReply["assistant"];
+    final output = llmReplies[0] != null
+        ? "${llmReplies[0]!}\n\n${llmReplies[1]!}"
+        : llmReplies[1]!;
 
     return output;
   }

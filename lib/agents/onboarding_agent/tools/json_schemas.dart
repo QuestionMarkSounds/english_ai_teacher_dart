@@ -84,9 +84,16 @@ Map<String, dynamic> generatePlanSchema = {
       "items": {"\$ref": "#/\$defs/Goal"},
       "title": "Goals",
       "type": "array"
+    },
+    "plan_description": {
+      "description":
+          "Compound imperative sentence listing at least three benefits of the course.",
+      "items": {"\$ref": "#/\$defs/Goal"},
+      "title": "Plan description",
+      "type": "string"
     }
   },
-  "required": ["reasoning", "name", "duration", "goals"],
+  "required": ["reasoning", "name", "duration", "goals", "plan_description"],
   "title": "Plan",
   "type": "object"
 };
