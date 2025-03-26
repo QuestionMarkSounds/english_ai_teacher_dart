@@ -88,6 +88,7 @@ class LessonSchema(BaseModel):
         title="Description", 
         description="Brief description of the lesson's benefits. Max 2 sentences."
     )
+    tasks: list[str] = Field("Three tasks for the user to complete in a form of a very short (max 7 words) imperative sentence. Do not mention the user information. Do not use the user description.")
     duration: int = Field("Duration of the lesson in minutes. Max 15 minutes")
     complexity: int = Field("Complexity level of the lesson. From 1 to 5, with 5 being the most complex")
     system_prompt: str = Field("AI tutor instructions to facilitate the lesson")
