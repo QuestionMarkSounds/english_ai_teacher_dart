@@ -15,7 +15,7 @@ void main() async {
     "name": "Mukhtar",
     "native language": "Armenian",
     "interests": "Watching TV, Politics",
-    "current level of english": "A2",
+    "current level of english": "B2",
   };
 
   // Chat history
@@ -61,7 +61,7 @@ void main() async {
 
     // The agent responds with an improvement suggestion
     String replyResponse =
-        await agent.stream(userInput, messageHistory, userInfo.toString());
+        await agent.stream(userInput, messageHistory, userInfo.toString(), isVoiceMsg: true);
     replyWithImprovement(replyResponse);
     messageHistory.add({"user": userInput});
     messageHistory.add({"assistant": replyResponse});
