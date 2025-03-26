@@ -125,6 +125,7 @@ class TalkyLessonAgent {
 
       Keep in mind user's proficiency level: $proficiencyLevel.
       Do not include or reiterate the user's message in the response!
+      Pinpoint the error if there are any. Give examples.
       In case if there are no issues with the user's English considering the user's proficiency level, respond with an empty response.
 
       Do not mention mistakes that do not count as a mistake.
@@ -132,7 +133,11 @@ class TalkyLessonAgent {
       DO NOT COUNT THESE ISSUES AS MISTAKES:
       - Minor phrasing issues are not a mistake.
       - the message is clear but could be simplified. This is not a mistake
-      ${isVoiceMsg? "- capitalization issues are not a mistake\n- punctuation issues including erroneous periods are not a mistake. \nFor example: **I think the Most important locations while. Traveling are your hotel. Grocery store, and drug store. As well as public transport stops.** This sentence has no mistakes" : ""}
+      ${isVoiceMsg? """- capitalization issues are not a mistake
+      - punctuation issues including erroneous periods are not a mistake. 
+      Example 1: **I think the Most important locations while. Traveling are your hotel. Grocery store, and drug store. As well as public transport stops.** This sentence has no mistakes.
+      Example 2: **Large language model technology has been. The most impactful. Innovation in recent years, allowing me to delegate routine tasks. And concentrate on defining problems. Rather than implementing solutions.** This sentence has no mistakes.
+      """ : ""}
       ''';
     final promptTemplate = ChatPromptTemplate.fromTemplates([
       (
