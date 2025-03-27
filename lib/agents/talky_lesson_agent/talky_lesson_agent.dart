@@ -38,6 +38,11 @@ class TalkyLessonAgent {
   }) {
     systemPrompt = '''
           You are an English language teacher that is practicing a conversation with the user.
+
+          Do not correct the user's usage of English.
+
+          {stt_warning}
+
           You are required to collect at least $maxIterations responses from the user. The number of user responses will be included below.
 
           Once there is a sufficient number of user responses, you should  use CompleteLesson tool to compose a summary of the lesson and to end the lesson.
@@ -79,7 +84,7 @@ class TalkyLessonAgent {
 
   // Ask Question method. Used to ask the user a question
   Future<String> askQuestion(List<Map<String, dynamic>> messageHistory,
-      Map<String, dynamic>? userInfo) async {
+      Map<String, dynamic>? userInfo, bool isVoiceMsg) async {
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     int responseCount = countHumanMessagesInHistory(messageHistory);
     final latestUserMessage = getLatestUserMessage(messages);
@@ -92,6 +97,7 @@ class TalkyLessonAgent {
           'message_history': messages,
           'number_of_responses': responseCount,
           'input': latestUserMessage != null ? latestUserMessage.contentAsString : '',
+          'stt_warning': isVoiceMsg? "WARNING: This input is an interpretation from a speech-to-text engine which is prone to generate erroneous periods in places where a user made a pause. Disregard erroneous periods." : ""
         });
         response = res["output"];
       },
@@ -107,25 +113,36 @@ class TalkyLessonAgent {
   Future<String?> replyWithImprovement(
       String input,
       List<Map<String, dynamic>> messageHistory,
-      Map<String, dynamic>? userInfo) async {
+      Map<String, dynamic>? userInfo, bool isVoiceMsg) async {
     final List<ChatMessage> messages = processMessageHistory(messageHistory);
     messages.add(ChatMessage.humanText(input));
 
-    final promptTemplate = ChatPromptTemplate.fromTemplates([
-      (
-        ChatMessageType.system,
-        '''
+    final improvementReplySystemPrompt =         '''
+      
+      ${isVoiceMsg? "WARNING: This input is an interpretation from a speech-to-text engine which is prone to generate erroneous periods in places where a user made a pause. Disregard erroneous periods." : ""}
+
       You are an English language teacher. Analyse the latest user message.
-      Respond with a short assessment of English language proficiency and 
-      improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.
 
       Keep in mind user's proficiency level: $proficiencyLevel.
       Do not include or reiterate the user's message in the response!
+      Pinpoint the error if there are any. Give examples.
       In case if there are no issues with the user's English considering the user's proficiency level, respond with an empty response.
 
-      Things that don't count as a mistake:
-      - the message is clear but could be simplified. Does not count as a mistake for english levels A1, A2 and B1.
-      '''
+      Do not mention mistakes that do not count as a mistake.
+
+      DO NOT COUNT THESE ISSUES AS MISTAKES:
+      - Minor phrasing issues are not a mistake.
+      - the message is clear but could be simplified. This is not a mistake
+      ${isVoiceMsg? """- capitalization issues are not a mistake
+      - punctuation issues including erroneous periods are not a mistake. 
+      Example 1: **I think the Most important locations while. Traveling are your hotel. Grocery store, and drug store. As well as public transport stops.** This sentence has no mistakes.
+      Example 2: **Large language model technology has been. The most impactful. Innovation in recent years, allowing me to delegate routine tasks. And concentrate on defining problems. Rather than implementing solutions.** This sentence has no mistakes.
+      """ : ""}
+      ''';
+    final promptTemplate = ChatPromptTemplate.fromTemplates([
+      (
+        ChatMessageType.system,
+        improvementReplySystemPrompt
       ),
       (ChatMessageType.human, 'input'),
       (ChatMessageType.messagesPlaceholder, 'messageHistory')
@@ -139,27 +156,27 @@ class TalkyLessonAgent {
         name: "Response",
         description: "",
         inputJsonSchema: {
-          "properties": {
-            "mistakes_present": {
-              "default": "True if mistakes are present, False if not",
-              "title": "Mistakes Present",
-              "type": "boolean"
-            },
-            "response": {
-              "default":
-                  """Respond with a short assessment of English language proficiency and 
-      improvement suggestions if appropriate. Max 3 sentences. Don't use bullet points. Include rephrased user message if appropriate.
-
-      Keep in mind user's proficiency level: $proficiencyLevel
-      Do not include the user's message in the response!
-      In case if there are no issues with the user's English considering the user's proficiency level, respond with an empty response.""",
-              "title": "Response",
-              "type": "string"
-            }
+        "title": "Response",
+        "type": "object",
+        "properties": {
+          "mistakes_present": {
+            "title": "Mistakes Present",
+            "type": "boolean",
+            "description": "Set to true if any mistakes are present, false otherwise. Do not count the following as mistakes: minor phrasing issues, oversimplified clarity, and—if this is a voice message—erroneous periods, punctuation, or capitalization errors."
           },
-          "title": "Response",
-          "type": "object"
-        },
+          "mistakes_types": {
+            "title": "Types of Mistakes Present",
+            "type": "string",
+            "description": "Describe the types of mistakes present, if any."
+          },
+          "response": {
+            "title": "Response",
+            "type": "string",
+            "description": "Provide a short assessment of the user's English language proficiency and any improvement suggestions if appropriate. Use a maximum of 3 sentences without bullet points. Optionally include a rephrased version of the user message, but do not include or reiterate the original message. Keep in mind the user's proficiency level: $proficiencyLevel. In case there are no issues with the user's English given their proficiency level, respond with an empty response."
+          }
+        }
+      }
+
       ),
       outputParser: ToolsOutputParser(),
     );
@@ -202,15 +219,15 @@ class TalkyLessonAgent {
   }
 
   Future<String> stream(String input, List<Map<String, dynamic>> messageHistory,
-      String userInformation) async {
+      String userInformation, {bool isVoiceMsg = false}) async {
     final llmReplies = await Future.wait([
-      replyWithImprovement(input, messageHistory, null),
+      replyWithImprovement(input, messageHistory, null, isVoiceMsg),
       askQuestion(
           messageHistory +
               [
                 {"user": input}
               ],
-          null)
+          null, isVoiceMsg)
     ]);
 
     final output = llmReplies[0] != null

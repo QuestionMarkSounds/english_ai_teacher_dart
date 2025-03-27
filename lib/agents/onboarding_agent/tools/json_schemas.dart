@@ -70,7 +70,8 @@ Map<String, dynamic> generatePlanSchema = {
       "type": "string"
     },
     "name": {
-      "description": "The name of the learning plan.",
+      "description":
+          "The name of the learning plan. Max 2 words. No need to put 'Plan'.",
       "title": "Name",
       "type": "string"
     },

@@ -9,8 +9,18 @@ Map<String, dynamic> lessonGenSchema = {
         },
         "description": {
           "default":
-              "Brief description of the lesson in a form of imperative sentence. Do not mention the user information. Do not use the user description. Max 1 sentence",
+              "This lesson will help improve specific language skills through engaging exercises.",
+          "description":
+              "Brief description of the lesson's benefits. Max 2 sentences.",
+          "title": "Description",
           "type": "string"
+        },
+        "tasks": {
+          "default":
+              "Three tasks for the user to complete in a form of a very short (max 7 words) imperative sentence. Do not mention the user information. Do not use the user description.",
+          "items": {"type": "string"},
+          "title": "Tasks",
+          "type": "array"
         },
         "duration": {
           "default": "Duration of the lesson in minutes. Max 15 minutes",
